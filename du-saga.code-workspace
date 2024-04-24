@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+    ],
+	"settings": {
+		"lua.targetVersion": "5.3",
+		"cSpell.enableFiletypes": [
+			"!lua"
+		],
+		"search.useIgnoreFiles": false,
+		"dotnetAcquisitionExtension.enableTelemetry": false
+	}
+}

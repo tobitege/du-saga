@@ -1,0 +1,16 @@
+{
+  "source": [
+    {
+      "dir": "./lua",
+      "exclude": []
+    },
+    {
+      "dir": "./libs",
+      "exclude": []
+    },
+    {
+      "dir": "./util",
+      "exclude": []
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "cli": {
+    "fmtVersion": 5
+  },
+  "name": "Saga",
+  "description": "Saga",
+  "sourcePath": "lua",
+  "outputPath": "out",
+  "libs": [],
+  "builds": {
+    "horizon2": {
+        "name": "Saga",
+        "type": "control",
+        "slots": { }
+    }
+  },
+  "targets": {
+    "development": {
+      "name": "development",
+      "minify": false,
+      "handleErrors": false,
+      "stripComments": true,
+      "variables": {
+        "debug": false
+      }
+    },
+    "release": {
+      "name": "release",
+      "minify": true,
+      "handleErrors": false,
+      "stripComments": true,
+      "variables": {
+        "debug": false
+      }
+    }
+  },
+  "internalPaths": [
+    "autoconf/",
+    "cpml/",
+    "pl/",
+    "utils/event",
+    "atlas",
+    "dkjson"
+  ]
+}

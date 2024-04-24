@@ -1,0 +1,41 @@
+{
+	"languageMode": "strict",
+	"lint": {"*": true, "LocalUnused": false},
+	"lintErrors": true,
+	"globals": [
+		"DEBUG"
+	],
+    "diagnostics.globals": [
+        "Navigator",
+        "json",
+        "utils",
+        "vec3",
+        "construct",
+        "core",
+        "library",
+        "player",
+        "system",
+        "unit",
+        "constants"
+    ],
+    "completion.autoRequire": false,
+    "workspace": {
+        "library": [
+          "./lua",
+          "./util",
+          "./util/du-mocks",
+          "C:/DualUniverse/game/data/lua",
+          "C:/DualUniverse/game/data/lua/utils",
+          "C:/DualUniverse/game/data/lua/pl"
+        ]
+    },
+    "runtime.version": "Lua 5.4",
+    "diagnostics.disable": [
+        "undefined-global",
+        "undefined-doc-param",
+        "redundant-parameter",
+        "lowercase-global",
+        "duplicate-set-field"
+    ],
+    "workspace.maxPreload": 1100
+}
