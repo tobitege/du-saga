@@ -22,12 +22,11 @@ end
 -- brakes[in]: Maximum brake force in Newtons that can be utilized in addition to gravity.
 -- return: Maximum speed that can be reached (in m/s), and the remaining distance to the target
 -- at which braking must start (in meters).
--- function Kinematic.computeBrakingDistanceV1(initialSpeed, distance, brakes, axis)
+-- function Kinematic.computeBrakingDistanceWorking(initialSpeed, distance, brakes, axis)
 -- 	local mass, G = cData.mass, cData.G
 -- 	local airFriction = -axis:dot(cData.worldAirFriction)
 
 -- 	-- Determine the direction of flight using utils.sign()
--- 	-- local direction = utils.sign(axis.z)
 -- 	local direction = utils.sign(distance)
 
 -- 	-- Get the appropriate maximum thrust based on the direction of flight
@@ -66,35 +65,28 @@ end
 
 function Kinematic.computeBrakingDistance(initialSpeed, distance, brakes, axis)
 	local mass, G = cData.mass, cData.G
-	local airFriction = -axis:dot(cData.worldAirFriction)
+	local airFriction = axis:dot(cData.worldAirFriction)
 
 	-- Determine the direction of flight using utils.sign
-	local direction = utils.sign(distance)
+	local direction = sign(distance)
 
 	-- Get the appropriate maximum thrust based on the direction of flight and axis
 	local maxThrust
-	if axis == cData.wFwd then
+	if axis == cData.wFwd or axis == cData.worldBack then
 		maxThrust = ternary(direction > 0, cData.MaxKinematics.Forward, cData.MaxKinematics.Backward)
 	else
 		maxThrust = ternary(direction > 0, cData.MaxKinematics.Up, cData.MaxKinematics.Down)
 	end
 
 	-- Adjust the total deceleration based on the direction of flight and axis
-	local gravityComponent
-	if axis == cData.wFwd then
-		gravityComponent = 0 -- Gravity does not affect longitudinal motion directly
-	else
-		gravityComponent = direction * mass * G
+	local gravityComponent = 0
+	if axis == cData.worldUp or axis == cData.worldDown then
+		gravityComponent = direction * mass * G * system.getActionUpdateDeltaTime() * 2
 	end
-	local totalDecel = (brakes or 0) + gravityComponent + airFriction
+	local totalDecel = (brakes or 0) + gravityComponent - airFriction
 
 	-- Calculate the effective acceleration considering gravity and axis
-	local accel
-	if direction > 0 then -- Ascent or Forward
-		accel = (maxThrust - gravityComponent) / mass
-	else -- Descent or Backward
-		accel = (maxThrust + gravityComponent) / mass
-	end
+	local accel = (maxThrust - direction * gravityComponent) / mass
 
 	-- Calculate the maximum speed that can be reached with the available thrust
 	local maxSpeed = math.sqrt(2 * accel * distance + initialSpeed ^ 2)

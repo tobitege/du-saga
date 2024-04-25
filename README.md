@@ -29,8 +29,12 @@ By design it automatically holds the current altitude unless changed by user inp
 prohibits roll and pitch (always levels out) and does **NOT** automatically follow
 terrain like a standard DU hovercraft/speeder!
 
+- See further down below for added new chat commands
+
+- The normal flight mode is now named "Standard" and should behave just like the original.
+
 - Added a new, **dynamic landing mode** which works both in atmosphere as well as in
-near-body space to e.g. land on below space station.  
+near-body space to e.g. land on below space station (when manually triggered by G key).  
 Warning: it has only been tested on space stations where a planetary body with gravity was
 nearby that defines the perpendicular orientation of the construct!
 If used outside any gravity well, manual piloting is required to land the ship.
@@ -53,10 +57,14 @@ See also the "Edit LUA parameters" menu in game.
 
 - With the HUD's main menu open, the cursor keys will no longer move the ship!
 
-- Some settings' status in the top HUD widgets are now colored, e.g. green for enabled/on or orange for disabled/off/inactive.
+- Some settings' status in the top HUD widgets are now colored,
+e.g. green for enabled/on or orange for disabled/off/inactive.
 
 - New hotkeys ALT+6 and ALT+7 to select previous or next route. A currently selected
 route's name or any other target is now being displayed in the top info widget.
+
+- New hotkeys ALT++Shit+6 to activate the "Base" and ALT+Shift+7 to set
+the current as the Base location. Also added accompanying chat commands "/setbase" and "/clearbase"
 
 - Added more user input validations for chat parameters when numbers are involved.
 
@@ -74,12 +82,6 @@ e.g. "**/agl 1.23**" to specify 1.23 meters as vertical offset.
 From then on the "Ground" value should display 0.
 This command can be repeated at any time for further adjustments.
 
-- To make room for new code, I had to decide to remove some minor features. (*sadtrombone*)  
-Things like sounds support, the "/debug" command and its display, the extra help screen
-as well as the safe-zone "skull" displays are now gone. Sorry, not sorry.
-
-- The normal flight mode is now named "Standard" and should behave just like the original.
-
 - Exceptions to this are the new landing mode and that it will no longer automatically
 change AGG altitude during Autopilot!
 Back in beta, when AGG's were for some time "bugged" and allowed super fast
@@ -90,17 +92,24 @@ way too fast now for AGG's to keep up with ships' altitude changes.
 the ground detection range basically more than doubles to **100m**, compared
 to max. ~40-45 meters (depending on talents even less!) with just hovers/boosters.  
 
-- Added optional velocity indicator (toggable in lua parameters) by Jeronimo (Default++ script)
-
 - Cosmetic changes: moved Parking Mode/Brake text hints up; moved altitude/speed bars
 a little further apart; added brake, brake lock indicators as well as "Moving"
 and "Vertical" notifications during Maneuver flight operations.
 
+- Warp info widget slightly changed, added some status colors.
+
 - Fixed */goto* command which tried to fix 0/planet center altitude (if ::pos was copied from Map),
 but assigned it to the wrong variable instead of the AP's target altitude.
+
 - Fixed display of AGG status.
+
 - Fixed status display of "Burn protection": it was previously only shown
 as true if it was actually safety throttling, which was misleading.
+
+- To make room for new code, I had to decide to remove some minor features. (*sadtrombone*)  
+Things like sounds support, the "/debug" command and its display, the extra help screen,
+the AR planets/moons dispay as well as the safe-zone "skull" displays are now gone.  
+Sorry, not sorry.
 
 - Several performance improvements and code-reduction measures.
 
@@ -128,21 +137,20 @@ Caveat: for ground-only constructs, like hovercrafts, this mode might not work
 as expected as at some speed the ship might gain altitude! Also keep in mind,
 that this mode does NOT follow terrain!
 
-- **/vertical** *xxx*
+- **/up** *xxx* and **/down** *xxx* 
 
   *xxx* is the required distance in meters (positive = up, negative = down).
-This will move the ship (if VTOL capable) in vertical direction with high precision
-and dynamic de-/acceleration adjustments.
+This will move the ship (if VTOL capable) in the given vertical direction
+with high precision and dynamic de-/acceleration adjustments.  
 The Hud's target marker will indicate the location (look up or down to see it).  
-This works both in atmosphere as well as in near-planet space, e.g. for space stations.  
+This works both in atmosphere as well as in near-planet space, e.g. around space stations.  
 There needs to be some planetary body of influence for altitude reference and alignment!
 
 - **/goto ::pos{...}**
 
   This LUA chat command now also works in Maneuver mode.
-  - Note: First go to hover/lift off the ground a little (use G key when landed), it doesn't do that yet itself (Todo!).
   - Step 1: Altitude adjustment  
-  First the construct will be moved vertically to a calculated altitude, either a set travel
+  First the construct will move vertically to a calculated altitude, either a set travel
   altitude (/travelAlt) or one that is at least 50m above the target. The travel altitude here
   is a separate setting apart from what the default Autopilot uses (15% of atmo).  
   If the current altitude is already higher than the calculated one, the current altitude is kept.
@@ -166,8 +174,11 @@ There needs to be some planetary body of influence for altitude reference and al
 
 - **/go**
 
-  Same as above /goto command, but a current target marker will be used as the destination.  
-This marker can be set by /setBase (e.g. landed at home base) or by activating an AP route in the menu.  
+  Similar to above /goto command, but a current target marker will be used as the destination.  
+This marker can be set by /setBase (e.g. landed at home base), Alt+Shift+6 to activate
+a stored base location or by activating an AP route in the menu.  
+This command will do a traversal at least 50m above the destination and not use the
+travel altitude as the /goto command does.
 
 - **ALT 8**
 

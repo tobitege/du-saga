@@ -144,7 +144,7 @@ end
 function calculateLandingScale(gDist, ftype, range)
 	local x = tonumber(gDist) or 100
 	local scale = getDampener(ftype, gDist, range or 100)
-	return clamp(scale, 0.1, 0.9)
+	return clamp(scale, 0.1, 0.99)
 end
 
 local function AxisLimiterEx(cD, axis, atmoLimit, distance)
@@ -154,43 +154,43 @@ local function AxisLimiterEx(cD, axis, atmoLimit, distance)
 	distance = tonumber(distance) or 1
 	if not vec3.isvector(cD[axis]) then P'Invalid axis' return false end
 
-	local kinematics, min, abs, sign = Kinematics(), math.min, math.abs, utils.sign
-	local dirSign, wAxis, ap, dampener, gC, ATMO_LIMIT = sign(distance), cD[axis], AutoPilot, 0.9, globals, 330
+	local min, abs, sign = math.min, math.abs, utils.sign
+	local wAxis, ap, dampener, gC = cD[axis], AutoPilot, 1, globals
+	local dirSign = sign(wAxis.z)
 
 	-- Speed and acceleration along the desired axis
 	local accel = cD.acceleration:dot(wAxis)
-	local currSpeed = cD.velocity.z -- :dot(dirSign*wAxis)
+	local currSpeed = cD.velocity.z
 
-	-- Max thrust of ground engines to catch us when landing
-	-- local maxDn = ternary(cD.inAtmo, cD.MaxKinematics.UpGroundAtmo, cD.MaxKinematics.UpGroundSpace) / cD.mass
-	-- User-configured landing speeds in km/h
-	local axMax = 0
+	local axMax = 1000
 	if cD.inAtmo then
-		axMax = cD.altitude > atmoLimit and ap.userConfig.landSpeedHigh or ap.userConfig.landSpeedLow
-	else
-		axMax = 50
+		if cD.altitude > (atmoLimit or 1000) then
+			axMax = ap.userConfig.landSpeedHigh
+		elseif dirSign < 0 then
+			axMax = ap.userConfig.landSpeedLow
+		end
+	elseif cD.altitude > 90000 then
+		axMax = ap.userConfig.landSpeedLow*0.5
 	end
 	-- Convert to m/s
-	axMax = axMax / 3.6
+	axMax = axMax/3.6
 
 	-- Calculate desired max velocity for selected axis
 	local targetSpeed, absDist, maxSpeed = 0, abs(distance), axMax
-	if ship.takeoff then
-		axMax = 20/3.6
-	else
-		maxSpeed, _ = kinematics.computeBrakingDistance(cD.vertSpeed, absDist,
-			cD.maxBrake or 0, distance >= 0 and cD.worldUp or cD.worldDown)
-		if absDist < 150 then
-			dampener = calculateLandingScale(absDist, "S", 150)
-		end
-		axMax = maxSpeed / 3.6
+	maxSpeed, _ = kinematics.computeBrakingDistance(cD.vertSpeed, absDist,
+		cD.maxBrake or 0, dirSign > 0 and cD.worldUp or cD.worldDown)
+	if absDist < (cD.inAtmo and 100 or 100) then
+		dampener = 0.75 * calculateLandingScale(absDist,"S",(cD.inAtmo and 100 or 100))
 	end
-	targetSpeed = min(axMax, ap.userConfig.landSpeedLow or 30) * dampener * dirSign -- m/s!
 	-- minimum speed?
-	if cD.inAtmo then
-		if dirSign < 0 and abs(targetSpeed) < 0.66 then targetSpeed = dirSign * 0.66 end
-	elseif ship.landingMode then
-		targetSpeed = targetSpeed * 0.5
+	if cD.isLanded and ship.takeoff then
+		targetSpeed = 20 / 3.6
+	else
+		-- fine-tune maxSpeed a bit as it can be pretty high
+		targetSpeed = min(maxSpeed/(absDist < 50 and 6 or 3),axMax)*dampener*dirSign -- m/s!
+	end
+	if not cD.inAtmo and ship.landingMode then
+		targetSpeed = targetSpeed * 0.75
 	end
 
 	-- targetSpeed now has same sign as "distance", i.e. negative when landing
@@ -202,24 +202,25 @@ local function AxisLimiterEx(cD, axis, atmoLimit, distance)
 	else
 		diffVel = (targetSpeed - currSpeed) * dirSign
 	end
-	if dirSign < 0 then
-		diffVel = diffVel + accel * (ship.dt or 0.02)
+	if dirSign < 0 and cD.inAtmo then
+		diffVel = diffVel + accel * dampener
 	end
 
-	diffAccel = (diffVel ) / cD.mass
+	diffAccel = diffVel / cD.mass
+	local thrustVector = diffAccel * cD.mass * wAxis * dirSign
 
-	local thrustVector = (diffAccel) * cD.mass * wAxis * dirSign
-
-	if gC.debug then
-	addDbgVal('<br>distance', round2(ship.targetDist, 3))
-	addDbgVal('<br>axMax', round2(axMax, 3))
-	addDbgVal('dampener', round2(dampener, 3))
-	addDbgVal('targetSpeed', round2(targetSpeed, 3))
-	addDbgVal('currSpeed', round2(currSpeed, 3))
-	addDbgVal('diffVel', round2(diffVel, 3))
-	addDbgVal('diffAccel', round2(diffAccel, 3))
-	addDbgVal('thrustVector', round2(thrustVector.z, 3))
-	end
+	-- if gC.debug then
+	-- addDbgVal('<br>dirSign', round2(dirSign))
+	-- addDbgVal('<br>distance', round2(ship.targetDist, 3))
+	-- addDbgVal('<br>axMax', round2(axMax, 3))
+	-- addDbgVal('maxSpeed', round2(maxSpeed, 3))
+	-- addDbgVal('dampener', round2(dampener, 3))
+	-- addDbgVal('targetSpeed', round2(targetSpeed, 3))
+	-- addDbgVal('currSpeed', round2(currSpeed, 3))
+	-- addDbgVal('diffVel', round2(diffVel, 3))
+	-- addDbgVal('diffAccel', round2(diffAccel, 3))
+	-- addDbgVal('thrustVector', round2(thrustVector.z, 3))
+	-- end
 	return thrustVector
 end
 
@@ -261,33 +262,33 @@ end
 -- planet's surface if you're moving on or near it. It determines whether to
 -- calculate the distance as a straight line in space or along the surface of
 -- a planet, depending on whether you provide information about the planet's size.
-function getTravelDistance(cPos, target, body)
-	local msq = math.sqrt
-	-- If body and/or radius are nil, calculate the direct distance
-	if body == nil or body.radius == nil then
-		return msq((cPos.x - target.x)^2 + (cPos.y - target.y)^2 + (cPos.z - target.z)^2)
-	end
+-- function getTravelDistance(cPos, target, body)
+-- 	local msq = math.sqrt
+-- 	-- If body and/or radius are nil, calculate the direct distance
+-- 	if not body or not body.radius then
+-- 		return msq((cPos.x - target.x)^2 + (cPos.y - target.y)^2 + (cPos.z - target.z)^2)
+-- 	end
 
-	-- Calculate the distance between the projections of the positions on the planet's surface
-	local surfDist = msq((cPos.x - target.x)^2 + (cPos.y - target.y)^2)
-	local r = body.radius
+-- 	-- Calculate the distance between the projections of the positions on the planet's surface
+-- 	local surfDist = msq((cPos.x - target.x)^2 + (cPos.y - target.y)^2)
+-- 	local r = body.radius
 
-	-- Check if cPos.z and target.z are both zero to avoid division by zero
-	if cPos.z == 0 and target.z == 0 then
-		return surfDist
-	end
+-- 	-- Check if cPos.z and target.z are both zero to avoid division by zero
+-- 	if cPos.z == 0 and target.z == 0 then
+-- 		return surfDist
+-- 	end
 
-	-- Calculate the angle between the positions and the planet's center
-	local cosAngle = (r^2 + cPos.z^2 + target.z^2 - surfDist^2) / (2 * r * msq(cPos.z^2 + target.z^2))
+-- 	-- Calculate the angle between the positions and the planet's center
+-- 	local cosAngle = (r^2 + cPos.z^2 + target.z^2 - surfDist^2) / (2 * r * msq(cPos.z^2 + target.z^2))
 
-	-- Check if cosAngle is within the valid range for math.acos
-	if cosAngle < -1 or cosAngle > 1 then
-		return msq((cPos.x - target.x)^2 + (cPos.y - target.y)^2 + (cPos.z - target.z)^2)
-	end
-
-	-- Calculate the distance to be traveled
-	return r * math.acos(cosAngle) + surfDist
-end
+-- 	-- Check if cosAngle is within the valid range for math.acos
+-- 	if cosAngle < -1 or cosAngle > 1 then
+-- 		return msq((cPos.x - target.x)^2 + (cPos.y - target.y)^2 + (cPos.z - target.z)^2)
+-- 	end
+--
+-- 	-- Calculate the distance to be traveled
+-- 	return r * math.acos(cosAngle) + surfDist
+-- end
 
 function isDirectlyAbove(vec1, vec2, margin)
 	if tonumber(margin) == nil then
@@ -382,7 +383,7 @@ function printDistance(meters, larger)
 	if tonumber(meters) == nil then return 'NaN' end
 	local absM = math.abs(meters)
 	if absM < ternary(larger, 10000, 1000) then
-		return utils.round(meters)..' m'
+		return round2(meters,1)..' m'
 	elseif absM < 200000 then
 		local km = meters / 1000
 		return round2(km, ternary(km > 10,1,2))..' km'

@@ -16,7 +16,8 @@ function dynamicSVG()
 	end
 
 	if cD.constructSpeed ~= nil then
-		conSpd = uround(cD.speedKph)
+		-- conSpd = round2((ship.landingMode or ship.vertical) and (cD.vertSpeed*3.6) or cD.speedKph,1)
+		conSpd = round2((ship.landingMode or ship.vertical) and cD.zSpeedKPH or cD.speedKph,1)
 		if cD.inAtmo then
 			maxSpd = math.ceil(uround(cD.burnSpeedKph))
 		else

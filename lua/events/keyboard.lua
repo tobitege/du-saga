@@ -152,10 +152,12 @@ end
 
 function onAlt6()
 	local ap, rdb = AutoPilot, RouteDatabase
-	if ap.enabled or #rdb.routes < 1 then return P'*<' end
+	if ap.enabled or #rdb.routes < 1 then return end
 	if not inputs.shift and inputs.alt then
 		ap.currentRouteIndex = newRtIdx(ap.currentRouteIndex or 1, #rdb.routes, true)
 		ap:setActiveRoute(ap.currentRouteIndex)
+	elseif inputs.shift and inputs.alt then
+		setApTarget(Config:getValue(configDatabankMap.base))
 	end
 end
 
@@ -165,6 +167,10 @@ function onAlt7()
 	if not inputs.shift and inputs.alt then
 		ap.currentRouteIndex = newRtIdx(ap.currentRouteIndex or 1, #rdb.routes, false)
 		ap:setActiveRoute(ap.currentRouteIndex)
+	elseif inputs.shift and inputs.alt then
+		Config:setValue(configDatabankMap.base, cData.position)
+		local aPos = Vec3ToPosString(cData.position)
+		P("Base set to: " .. tostring(aPos))
 	end
 end
 

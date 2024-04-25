@@ -7,10 +7,14 @@ node_modules/
 util/
 error.log
 tmp
-docs/*.*
-.history/*.*
+docs/
+.history/
 out/development/Saga.yaml
 out/release/Saga.yaml
 out/development/Saga.conf
 out/release/Saga.conf
-screen/*.*
+screen/
+
+util/Codex.lua
+build_tobitege.bat
+saga_dubuild.lua

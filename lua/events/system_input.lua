@@ -148,28 +148,27 @@ function onInput(text)
 		elseif action == '/go' then
 			if vec3.isvector(ap.target) then
 				P('Moving to '..Vec3ToPosString(ap.target))
-				gotoTarget(ap.target, true, cD.inAtmo and ap.userConfig.travelAlt or cD.altitude)
-				ship.travel = true
+				ship.travel = gotoTarget(ap.target, true, cD.inAtmo and ap.userConfig.travelAlt or cD.altitude)
 			end
 		elseif action == '/goalt' then
 			if num2 == nil then return Err(ERR_INV_DIST) end
 			num2 = clamp(num2,0,200000)
 			if num2 > cD.altitude then
 				local alt = ternary(num2 - cD.altitude > 0, num2 - cD.altitude, cD.altitude - num2)
-				P('Moving to '..round2(num2,2)..'m altitude.')
-				moveVert(alt)
-				ship.vertical = true
+				P('[I] Moving to '..round2(num2,2)..'m altitude.')
+				ship.vertical = moveVert(alt)
 			end
 		elseif action == '/rtb' then
 			local tmp = Config:getValue(cfMap.base, nil)
 			if not tmp then return Err('No base set!') end
-			P('Back to base '..tostring(vec3(tmp)))
-			gotoTarget(tmp)
-			ship.travel = true
-		elseif action == '/vertical' then
+			P('[I] Back to base '..tostring(vec3(tmp)))
+			ship.travel = gotoTarget(tmp)
+		elseif action == '/down' then
 			if num2 == nil then return Err(ERR_INV_DIST) end
-			moveVert(clamp(num2,-200000,200000))
-			ship.vertical = true
+			ship.vertical = moveVert(clamp(num2,-200000,0))
+		elseif action == '/up' then
+			if num2 == nil then return Err(ERR_INV_DIST) end
+			ship.vertical = moveVert(clamp(num2,0,200000))
 		end
 	end
 
@@ -310,9 +309,9 @@ function onInput(text)
 		P('AGG target altitude: '..num2)
 	end
 
-	if action == '/agg' and links.antigrav ~= nil then
-		links.antigrav.toggle()
-	end
+	---@TODO toggle for warp drive widget
+	-- if action == '/warp' and links.warpdrive ~= nil then
+	-- end
 
 	if action == '/unit' and _hud then
 		_hud.toggleUnitWidget()

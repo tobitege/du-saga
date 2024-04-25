@@ -90,9 +90,9 @@ function mapPos2String(mPos)
 	local sf = string.format
 	if type(mPos) ~= "table" then return "" end
 	return '::pos{' .. (mPos.systemId or 0).. ',' .. (mPos.bodyId or 0) .. ',' ..
-			sf("%.4f", (mPos.latitude or 0)) .. ',' ..
-			sf("%.4f", (mPos.longitude or 0)) ..  ',' ..
-			sf("%.4f", (mPos.altitude or 0)) .. '}'
+			sf("%.4f",(mPos.latitude or 0)) .. ',' ..
+			sf("%.4f",(mPos.longitude or 0)) ..  ',' ..
+			sf("%.4f",(mPos.altitude or 0)) .. '}'
 end
 
 function initialiseAtlas()

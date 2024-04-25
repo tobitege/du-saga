@@ -85,13 +85,13 @@ path.menuLegendKey {fill:hsl(0,0%,95%)}
 .speedBar{position:absolute; width:11.5vh; height:11.5vh; left:32vh; top:-12vh; border-radius:1vh}
 .throttleBar{position:absolute; width:11.5vh; height:11.5vh; left:37vh; top:-8vh; border-radius:1vh}
 .altBar{position:absolute; width:14vh; height:11.5vh; left:-43vh; top:-12vh; border-radius:1vh}
-.debugInfo {position:absolute; top:17vh; right:76vw; width:10vw; padding-left: 0.5vh; padding-top: 0.5vh; padding-bottom: 0.5vh; padding-right: 0.5vh; border:0.1vh;border-style:solid;border-color:orangered;background-color:rgba(0,0,0, 0.2)}
 
 .atmoAlert	{position:absolute; top:74vh;	right:62.9vw;	width:10vw; padding:0.2vh; border:0.2vh;
 	font-size: 1vh;color: ivory; text-shadow:0.2vh 0.2vh 1vh black;}
 .apAlert	{position:absolute; top:25vh;	left:71vw;	width:10vw; padding: 1vh; border:0.2vh; border-style: solid; border-color: orangered}
 .brakeAlert	{position:absolute; top:5vh;	left:44vw;	width:10vw; padding: 1vh}
 ]]
+--.debugInfo {position:absolute; top:17vh; right:76vw; width:10vw; padding-left: 0.5vh; padding-top: 0.5vh; padding-bottom: 0.5vh; padding-right: 0.5vh; border:0.1vh;border-style:solid;border-color:orangered;background-color:rgba(0,0,0, 0.2)}
 --,insCss = [[
 -- .infoPanel{position:absolute; width:140vh; height:140; left:0vh; top:0vh; border-radius:1vh}
 -- ]]

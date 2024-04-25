@@ -88,11 +88,12 @@ function()
 		if type(target) ~= 'table' then
 			target = Config:getValue(configDatabankMap.base)
 		end
-		if type(target) ~= 'table' then return end
-		if target.x ~= nil then
-			this:setTarget(target)
-		elseif target[3] and RouteDatabase:getDatabankName() == target[3] then
-			this:setActiveRoute(target[1], target[2])
+		if type(target) == 'table' then
+			if target.x ~= nil then
+				this:setTarget(target)
+			elseif #target == 3 and target[3] and RouteDatabase:getDatabankName() == target[3] then
+				this:setActiveRoute(target[1], target[2])
+			end
 		end
 	end
 

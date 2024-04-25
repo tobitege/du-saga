@@ -1,5 +1,5 @@
 --based on STEC class by Shadow Templar v1.19
-local kinematics, abs, clamp, max, min, atan, rad, sign, uround, mceil, sqrt = Kinematics(), math.abs, utils.clamp, math.max, math.min, math.atan, math.rad, utils.sign, utils.round, math.ceil, math.sqrt
+local abs, clamp, max, min, atan, rad, sign, uround, mceil, sqrt = math.abs, utils.clamp, math.max, math.min, math.atan, math.rad, utils.sign, utils.round, math.ceil, math.sqrt
 
 function STEC()
 	local self = {}
@@ -260,7 +260,9 @@ function STEC()
 			local altCeil = tmpAlt + ternary(self.travel, 50, 0)
 			-- Determine new projected "travel" altitude
 			local trvA = 0
-			if cD.inAtmo and self.travel then trvA = self.travelAltitude end
+			if cD.inAtmo and self.travel and self.travelAltitude then
+				trvA = self.travelAltitude
+			end
 			if trvA > altCeil and trvA > cD.altitude then
 				altCeil = trvA
 			elseif cD.altitude > altCeil then
@@ -277,16 +279,16 @@ function STEC()
 		local altDiff = round2(tmpAlt - cD.altitude, 2)
 		local targetDirection = (target - cPos)
 		local dest = targetDirection:normalize()
-		self.targetDist = abs(targetDirection:len())-- - targetRadius)
+		self.targetDist = abs(targetDirection:len())
 		self.angle = -math.rad(getTargetAngle(target))
 		self.isAbove = isDirectlyAbove(cPos, target, 0.3)
 
-		if gC.debug then
-		addDbgVal('Status', tostring(' ['..(self.state or 'Flight')..']'), true)
-		addDbgVal('A Endpoint',round2(tmpAlt,2))
-		addDbgVal('A WP',round2(tmpAlt,2))
-		addDbgVal('A Diff',altDiff)
-		end
+		-- if gC.debug then
+		-- addDbgVal('Status', tostring(' ['..(self.state or 'Flight')..']'), true)
+		-- addDbgVal('A Endpoint',round2(tmpAlt,2))
+		-- addDbgVal('A WP',round2(tmpAlt,2))
+		-- addDbgVal('A Diff',altDiff)
+		-- end
 
 		-- frame time
 		self.dt = clamp(system.getActionUpdateDeltaTime(),0.0015,0.5)
@@ -324,8 +326,8 @@ function STEC()
 
 			-- target is already the temp waypoint, check for bailout
 			if (self.targetDist <= targetRadius) or
-				((self.takeoff or self.vertical) and self.targetDist <= 0.3) or
-				(self.landingMode and self.GrndDist and self.GrndDist <= 0.5)
+				((self.takeoff or self.vertical) and self.targetDist <= 0.1) or
+				(self.landingMode and self.GrndDist and self.GrndDist <= 0.2)
 			 then
 				if self.vertical or self.takeoff then
 					self.resetMoving()
@@ -363,7 +365,8 @@ function STEC()
 
 				-- * Speed limits
 				delta = vec3()
-				local res = AxisLimiter(cD, altDiff > 0 and 'worldUp' or 'worldDown', atmoLimit, altDiff)
+				local axis = (self.landingMode or altDiff < 0) and 'worldDown' or 'worldUp'
+				local res = AxisLimiter(cD, axis, atmoLimit, altDiff)
 				if res and vec3.isvector(res) then delta.z = -res.z else self.resetMoving()end
 
 				-- convert delta to world vec3
@@ -413,15 +416,15 @@ function STEC()
 			target = self.movePosAltitude(self.gotoLock, cD.altitude - self.holdAltitude)
 			targetDirection = target - cPos
 			dest = targetDirection:normalize()
+			self.isAbove = isDirectlyAbove(cPos, target, 0.3)
 			self.targetVector = dest
-			self.targetDist = abs(getTravelDistance(target, cPos, cD.body))
+			self.targetDist = abs(targetDirection:len())
 
 			brkDist, _ = kinematics.computeDistanceAndTime(cD.forwardSpeed,
 				0, mass, cD.MaxKinematics.Forward, 0, cD.maxBrake)
 
 			-- if necessary, shorten the target distance so that thrust is corrected below
-			if (brkDist >= (self.targetDist - targetRadius))
-				or self.targetDist < targetRadius then
+			if (brkDist >= (self.targetDist - targetRadius)) or self.targetDist < targetRadius then
 				self.targetDist = self.targetDist - brkDist
 			end
 			-- If getting close to target, then no multiplier
@@ -442,9 +445,9 @@ function STEC()
 			end
 
 			-- Check if we're close enough to land
-			if self.targetDist <= 1 and math.abs(cD.forwardSpeed) < 0.5 then
-				-- if we just reached the interim point above the actual
-				-- target, reset the destination to the final target
+			if (self.isAbove or self.targetDist <= 0.5) and math.abs(cD.forwardSpeed) < 0.5 then
+				-- if we just reached the interim point above the actual target,
+				-- reset the destination to the final target
 				self.resetFlags()
 				self.prepLanding()
 				self.landingMode = true
@@ -537,9 +540,11 @@ function STEC()
 		end
 
 		-- * Altitude Hold
-		local doHoldAlt = gC.altitudeHold and self.holdAltitude >= 100
-						  and not (self.landingMode or self.takeoff or self.vertical)
-		tmp, atmp = self.applyAltitudeHold(cD, doHoldAlt, tmp, atmp)
+		if not landed then
+			local doHoldAlt = gC.altitudeHold and self.holdAltitude >= 100
+							and not (self.landingMode or self.takeoff or self.vertical)
+			tmp, atmp = self.applyAltitudeHold(cD, doHoldAlt, tmp, atmp)
+		end
 
 		-- * Follow Gravity (pitch / rotation.x)
 		if self.followGravity then
@@ -711,7 +716,9 @@ function moveVert(dist)
 	if gotoTarget(a) then
 		local aPos = Vec3ToPosString(a)
 		P("Moving to: " .. tostring(aPos))
+		return true
 	end
+	return false
 end
 
 function shipLandingTask(cD)

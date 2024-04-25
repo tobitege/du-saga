@@ -4,17 +4,18 @@ Widgets.warpInfo = Widget:new{
 }
 function Widgets.warpInfo:build()
 	self.warpData = warpData
-	local tColor = ternary(self.warpData.status ~= 'Ready', 'springgreen', 'orangered')
-	local cColor = ternary(self.warpData.warpCells >= self.warpData.warpCellsNeeded, 'springgreen', 'orangered')
+	local cs = colorSpan
+	local isReady, cells = self.warpData.status == 'Ready', self.warpData.warpCells >= self.warpData.warpCellsNeeded
+	local cColor = ternary(cells, 'springgreen', 'orangered')
+	local tColor = ternary(isReady and cells, 'springgreen', 'orangered')
 
-	local strings = {}
-	strings[#strings+1] = boldSpan('WARP DRIVE INFO')
-	strings[#strings+1] = 'Status : '..colorSpan(tColor,self.warpData.status)
-	strings[#strings+1] = 'Distance : ' .. printDistance(self.warpData.warpDistance, true)
-	strings[#strings+1] = 'Destination : ' .. self.warpData.warpDestination
-	strings[#strings+1] = 'Cells Available : ' .. colorSpan(cColor,self.warpData.warpCells)
-	strings[#strings+1] = 'Cells Needed : ' .. self.warpData.warpCellsNeeded
-	strings[#strings+1] = colorSpan(cColor,'ENGAGE WARP: ALT-J')
-	self.rowCount = #strings
-	return table.concat(strings, '<br>')
+	local s = {}
+	s[#s+1] = boldSpan('WARP DRIVE INFO')
+	s[#s+1] = 'Status : '..cs(tColor,self.warpData.status)
+	s[#s+1] = 'Destination : ' .. self.warpData.warpDestination
+	s[#s+1] = 'Distance : ' .. printDistance(self.warpData.warpDistance, true)
+	s[#s+1] = 'Cells: ' .. cs(cColor,self.warpData.warpCellsNeeded) .. ' ('..self.warpData.warpCells..')'
+	s[#s+1] = cs(tColor,'ENGAGE WARP: ALT-J')
+	self.rowCount = #s
+	return table.concat(s, '<br>')
 end

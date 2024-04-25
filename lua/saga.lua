@@ -34,8 +34,8 @@ yawSpeedFactor =  1 --export: This factor will increase/decrease the player inpu
 -- (higher value may be unstable) Valid values: Superior or equal to 0.01
 rollSpeedFactor = 1.5 --export: This factor will increase/decrease the player input along the roll axis
 -- by brakeSpeedFactor * velocity Valid values: Superior or equal to 0.01
-brakeSpeedFactor = 3 --export: When braking, this factor will increase the brake force,
--- this factor will increase the brake force by a flat brakeFlatFactor * velocity direction>
+brakeSpeedFactor = 3 --export: When braking, this factor will increase the brake force
+-- this factor will increase the brake force by a flat brakeFlatFactor * velocity direction
 -- (higher value may be unstable) Valid values: Superior or equal to 0.01
 brakeFlatFactor = 1 --export: Flat braking factor (0.01+)
 --When the pilot stops rolling,  flight model will try to get back to horizontal (no roll)
@@ -66,13 +66,14 @@ spaceTankHandling = 5 --export: (Space Fuel Tank Handling) 0-5
 rocketTankHandling = 0 --export: (Rocket Fuel Tank Handling) 0-5
 -- Skill level of person who deployed tanks, or highest talents applied to construct
 -- with reapply Talents.
-fuelTankOptimization = 5 --export: Mining and Inventory > Stock Control >(Fuel Tank Optimization) 0-5
+fuelTankOptimization = 5 --export: Talents Fuel Tank Optimization: 0-5
 -- Skill level of person who deployed tanks, or highest talents applied to construct
 -- with reapply Talents.
-containerOptimization = 5 --export: Mining and Inventory > Stock Control >(Container Optimization) 0-5
+containerOptimization = 5 --export: Talents Container Optimization: 0-5
 
--- if using Engine tags(see instructions), default engine control mode when activating control unit.
+-- IF using engine tags (see instructions), default engine control mode when activating control unit.
 boostModeOverride = 'off' --export: (Engine Throttle Mode Override) 'off' , 'all' , 'hybrid', 'primary'
+
 -- (no real limit but beyond these values has less/no effect or may cause problems)
 -- if your ship often swings past where it's trying to aim and wobbles back and forth,
 -- reduce this. if you want it to snap at a point faster/stronger(smaller nimble ships)
@@ -84,10 +85,10 @@ dockingMode = 1 --export: Docking mode (1 = manual, 2 = Automatic, 3 = Owner)
 dockWidget = true --export: Show docking widget (toggle with /dock command)
 --velocityVector = true --export: Display velocity indicator
 
-maxLandingSpeedHigh = 200 --export Max vertical landing speed above 1 km altitude (default: 200; Maneuver mode)
-maxLandingSpeedLow = 100 --export Max vertical landing speed below 1 km altitude (default: 100; Maneuver mode)
-travelAlt = 1500 --export Maneuver mode: default travel altitude for AP targets (default: 1500)
-DEBUG = false --export Enable some debug output
+maxLandingSpeedHigh = 200 --export Maneuver mode: Max landing speed above 1 km altitude. Default: 200
+maxLandingSpeedLow = 100 --export Maneuver mode: Max landing speed below 1 km altitude. Default: 100
+travelAlt = 900 --export Maneuver mode: default travel altitude for AP targets. Default: 900
+DEBUG = true --export Enable some debug output
 
 globals = {
 	advAtmoEngines = false,
@@ -178,6 +179,7 @@ navCom = Nav.axisCommandManager
 -- require('data/remap')
 require('data/links')
 require('libmain')
+kinematics = Kinematics()
 
 printHello()
 

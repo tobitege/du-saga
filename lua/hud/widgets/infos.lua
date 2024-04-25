@@ -1,10 +1,10 @@
 Widgets.infos = Widget:new{class = 'infos'}
 function Widgets.infos:build()
 	local gC, cD, ap = globals, cData, AutoPilot
-	local s, rnd = {}, round2
-	local currentRPY, gFM = cD.rpy, gC.maneuverMode
+	local s, cs, rnd = {}, colorSpan, round2
+	local rpy, gFM = cD.rpy, gC.maneuverMode
     local fm = ternary(gFM, ternary(ship.landingMode,'LANDING','Maneuver'),'Standard')
-	s[#s+1] = boldSpan('FLIGHT MODE: ')..colorSpan(ternary(gFM,'orange','springgreen'),fm)
+	s[#s+1] = boldSpan('FLIGHT MODE: ')..cs(ternary(gFM,'orange','springgreen'),fm)
 
 	-- Display route name or target location, if possible
 	if ap.target then
@@ -13,15 +13,15 @@ function Widgets.infos:build()
 		if rIdx and rIdx > 0 then
 			local tmpR = RouteDatabase.routes[rIdx]
 			if tmpR and tmpR.name then
-				s[#s+1] = sT..colorSpan('springgreen',tostring(tmpR.name))
+				s[#s+1] = sT..cs('springgreen',tostring(tmpR.name))
 			end
 		else
 			if ap.targetLoc then
-				s[#s+1] = sT..colorSpan('springgreen',tostring(ap.targetLoc))
+				s[#s+1] = sT..cs('springgreen',tostring(ap.targetLoc))
 			end
 		end
-		if gC.maneuverMode then
-			s[#s+1] = boldSpan('Travel alt.: ')..colorSpan('springgreen',round2(ap.userConfig.travelAlt,2))
+		if gC.maneuverMode and cD.inAtmo then
+			s[#s+1] = boldSpan('Travel alt.: ')..cs('springgreen',round2(ap.userConfig.travelAlt,2))
 		end
 	end
 
@@ -29,10 +29,9 @@ function Widgets.infos:build()
 	-- * ##### Check getConstructData() first before uncommenting!!!
 
 	s[#s+1] = 'Throttle = ' .. rnd(cD.curThrottle,2)
-	s[#s+1] = 'Pitch = ' .. rnd(currentRPY.pitch,2)
-	s[#s+1] = 'Yaw = ' .. rnd(currentRPY.yaw,2)
-	s[#s+1] = 'Roll = ' .. rnd(currentRPY.roll,2)
-	s[#s+1] = '<br>Mass = ' .. rnd(cD.mass/1000, 3) .. ' T'
+	s[#s+1] = 'Pitch = ' .. rnd(rpy.pitch,2)
+	s[#s+1] = 'Yaw = ' .. rnd(rpy.yaw,2)
+	s[#s+1] = 'Roll = ' .. rnd(rpy.roll,2)
 	--s[#s+1] = 'Wing Stall Angle = ' .. ap.userConfig.wingStallAngle
 	--s[#s+1] = 'Velocity Angle = ' .. rnd(getVelocityAngle(),0)
 	--s[#s+1] = 'worldAirFriction = ' .. round2(cD.worldAirFriction:len(),3)
@@ -40,10 +39,11 @@ function Widgets.infos:build()
 	-- s[#s+1] = 'angular Acc. = ' .. round2(cD.worldAngularAcceleration:len(),3)
 	-- s[#s+1] = 'angular Vel. = ' .. round2(cD.worldAngularVelocity:len(),3)
 	--s[#s+1] = 'Crossection = ' .. round2(cD.crossSection,3)
-	s[#s+1] = 'G = ' .. round2(cD.G,3)
+	-- s[#s+1] = 'G = ' .. round2(cD.G,3)
 	s[#s+1] = '<br>Burn Protection = ' .. tostring(ap.userConfig.throttleBurnProtection)
 	s[#s+1] = 'Max Space V = ' .. tostring(rnd(ap.maxSpaceSpeed))
 	s[#s+1] = 'Brake Dist = ' .. printDistance(cD.brakes.distance, true)
+	s[#s+1] = 'Mass = ' .. rnd(cD.mass/1000, 3) .. ' T'
 	if gC.altitudeHold and gC.holdAltitude > 0 then
 		s[#s+1] = 'Alt. Hold = ' .. round2(gC.holdAltitude,0)
 	end
@@ -63,7 +63,7 @@ function Widgets.infos:build()
 	end
 	s[#s+1] = "Ground: "..round2(cD.GrndDist or 0,2)
 
-	if ap.target ~= nil and ap.target ~= "" then
+	if vec3.isvector(ap.target) then
 		local distanceToTarget = vector.dist(ap.target, cD.position)
 		s[#s+1] = '<br>Target = ' .. printDistance(distanceToTarget)
 		local speed = cD.constructSpeed

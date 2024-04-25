@@ -230,14 +230,14 @@ function getTargetAngularVelocity(finalPitchInput, finalRollInput, finalYawInput
 end
 
 -- Engine commands (called from applyShipInputs)
-function applyEngineCommands(targetAngularVelocity, angularAcceleration, brakeAcceleration)
+function applyEngineCommands(targetAngularVelocity, angularAcceleration, brkAccel)
 	local gC, aCache, ap = globals, Axis, AutoPilot
 	local keepCollinearity = true -- for easier reading
 	local dontKeepCollinearity = false -- for easier reading
 	local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
 
 	Nav:setEngineTorqueCommand('torque', angularAcceleration, keepCollinearity, 'airfoil', '', '', tolerancePercentToSkipOtherPriorities)
-	Nav:setEngineForceCommand('brake', brakeAcceleration)
+	Nav:setEngineForceCommand('brake', brkAccel)
 
 	-- Autonavigation aka Cruise Control
 	local autoNavigationEngineTags = ''
@@ -408,7 +408,7 @@ function applyShipInputs()
 
 	local angularAcceleration = torqueFactor * (targetAngularVelocity - cData.worldAngularVelocity)
 	angularAcceleration = angularAcceleration - cData.angularAirFriction -- Try to compensate air friction
-	local brakeAcceleration = -finalBrakeInput * (brakeSpeedFactor * cData.wVel + brakeFlatFactor * cData.wVelDir)
+	local brkAccel = -finalBrakeInput * (brakeSpeedFactor * cData.wVel + brakeFlatFactor * cData.wVelDir)
 	if not gC.rotationDampening then
 		if inputs.pitch == 0 and inputs.yaw == 0 and inputs.roll == 0 then
 			angularAcceleration = vec3()
@@ -416,20 +416,20 @@ function applyShipInputs()
 	end
 	if gC.inOrbit and gC.orbitalHold and not gC.brakeTrigger then
 		local brakeSensitivity = clamp(((orbitFocus().orbitAltTarget-gC.targetOrbitAlt)*0.0001)*4,0.01,5)
-		brakeAcceleration = vec3(clamp(brakeAcceleration.x,-brakeSensitivity,brakeSensitivity), clamp(brakeAcceleration.y,-brakeSensitivity,brakeSensitivity), clamp(brakeAcceleration.z,-brakeSensitivity,brakeSensitivity))
+		brkAccel = vec3(clamp(brkAccel.x,-brakeSensitivity,brakeSensitivity), clamp(brkAccel.y,-brakeSensitivity,brakeSensitivity), clamp(brkAccel.z,-brakeSensitivity,brakeSensitivity))
 	end
 	if ap.enabled and (brakeCtrl == 12.1 or brakeCtrl == 13.1
 		or ((brakeCtrl == 0.1) and cData.zSpeedKPH > -100))
 		and cData.speedKph < cData.burnSpeedKph-50 then
 			local brkSens2 = 2
-			brakeAcceleration = vec3(clamp(brakeAcceleration.x,-brkSens2,brkSens2),
-				clamp(brakeAcceleration.y,-brkSens2,brkSens2),
-				clamp(brakeAcceleration.z,-brkSens2,brkSens2))
+			brkAccel = vec3(clamp(brkAccel.x,-brkSens2,brkSens2),
+				clamp(brkAccel.y,-brkSens2,brkSens2),
+				clamp(brkAccel.z,-brkSens2,brkSens2))
 	end
 	if ap.landingMode then
-		brakeAcceleration = brakeAcceleration * 9
+		brkAccel = brkAccel * 9
 	elseif gC.altitudeHold then
-		brakeAcceleration = -inputs.brake * cData.wFwd * ((cData.forwardSpeed + cData.lateralSpeed)*3.6)
+		brkAccel = -inputs.brake * cData.wFwd * ((cData.forwardSpeed + cData.lateralSpeed)*3.6)
 	end
-	applyEngineCommands(targetAngularVelocity, angularAcceleration, brakeAcceleration)
+	applyEngineCommands(targetAngularVelocity, angularAcceleration, brkAccel)
 end

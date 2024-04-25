@@ -34,20 +34,22 @@ function getWarpData()
 	-- elseif status == 15 then
 	--	 status = 'Ready'
 	-- end
+	local noDest = 'No destination set'
 	if status == 15 then
 		status = 'Ready'
 	elseif status == 11 then
-		status = 'Destination Not Set'
+		status = noDest
 	else
-		status = 'Not Ready'
+		status = 'Not ready'
 	end
 	local warpDistance = links.warpdrive.getDistance()
 	local warpDestination = links.warpdrive.getDestinationName()
-	if status == 'Destination Not Set' then
-		warpDestination = 'No Destination'
+	local warpCellsNeeded = links.warpdrive.getRequiredWarpCells()
+	if status == noDest then
+		warpDestination = 'No destination'
+		warpCellsNeeded =  0
 	end
 	local warpCells = links.warpdrive.getAvailableWarpCells()
-	local warpCellsNeeded = links.warpdrive.getRequiredWarpCells()
 	return {
 		status = status,
 		warpDistance = warpDistance,
