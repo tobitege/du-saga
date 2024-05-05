@@ -169,7 +169,6 @@ function getConstructData(construct, core)
 		_cD.MaxKinematics.Forward = math.abs((tkForward[1] + tkForward[3]) + virtGravEngine.y)
 	end
 	--_cD.forceRatio = round2(_cD.MaxKinematics.Forward / _cD.MaxKinematics.Up, 4) -- forward-to-vertical force ratio
-	--gC.dbgTxt = gC.dbgTxt .. '<br>Ratio: '.._cD.forceRatio
 	if gC.maxBrake and gC.maxBrake > 1 then
 		_cD.maxBrake = gC.maxBrake
 	end

@@ -436,7 +436,6 @@ function STEC()
 			end
 
 			-- Check if we're close enough to land
-			--(angleSign < 0) or
 			if ((self.isAbove or self.targetDist <= 0.2) and math.abs(cD.forwardSpeed) < 1) then
 				-- if we just reached the interim point above the actual target,
 				-- reset the destination to the final target
@@ -444,9 +443,6 @@ function STEC()
 				self.prepLanding()
 				self.landingMode = true
 				self.switchState('LANDING')
-			-- elseif angleSign < 0 then --we overshot?!
-			-- 	self.switchState()
-			-- 	self.resetFlags()
 			end
 		end
 		return tmp, atmp
