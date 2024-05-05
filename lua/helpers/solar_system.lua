@@ -20,6 +20,18 @@ function findClosestBody(coordinates)
 	return closestBody, minDistance
 end
 
+function worldToLocal(vec)
+	if not vec3.isvector(vec) then return nil end
+	local cD = cData
+	return vec3(
+			library.systemResolution3(
+			{cD.wRight:unpack()},
+			{cD.wFwd:unpack()},
+			{cD.worldUp:unpack()},
+			{vec:unpack()}
+		))
+end
+
 function parsePosString(posString)
 	local num = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
 	local systemId, bodyId, latitude, longitude, altitude =
@@ -63,7 +75,7 @@ end
 function bodyPosFromWorldPos(body, position)
 	-- We need to extract the "local" coordinate (offset from planet center) here
 	-- and then normalize it to do math with it
-	local offset = position - vec3(body.center)
+	local offset = vec3(position) - vec3(body.center)
 	local oNormalized = offset:normalize()
 	return {
 		systemId = body.systemId,
@@ -76,6 +88,13 @@ end
 
 function worldToMapStr(wPos)
 	return mapPos2String(worldToMapPos(wPos))
+end
+
+function mapPosToVec3(v)
+	if type(v) == 'table' and v.latitude then
+		return vec3(v.latitude, v.longitude, v.altitude)
+	end
+	return nil
 end
 
 function worldToMapPos(v)

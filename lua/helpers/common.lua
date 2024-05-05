@@ -131,6 +131,8 @@ function getDampener(ftype, x, range)
 		res = 1 - math.log(x + 1) / math.log(range + 1)
 	elseif ftype == 'P' then -- Parabolic
 		res = 1 - (x * x)
+	elseif ftype == 'P2' then -- Parabolic v2 (right parabolic half)
+		res = 1 - (x / range)^2
 	elseif ftype == 'Q' then -- Quadratic
 		res = 1 - (x / range)^2
 	elseif ftype == 'E' then -- Exponential
@@ -141,86 +143,121 @@ function getDampener(ftype, x, range)
 	return res
 end
 
-function calculateLandingScale(gDist, ftype, range)
+function calculateLandingScaleOrg(gDist, ftype, range)
 	local x = tonumber(gDist) or 100
-	local scale = getDampener(ftype, gDist, range or 100)
+	local scale = getDampener(ftype, x, range or 100)
 	return clamp(scale, 0.1, 0.99)
 end
 
+-- function calculateLandingScale(distance)
+--     local startDistance = 600 -- Distance at which the dampener starts to decline
+--     local endDistance = 20 -- Distance at which the dampener reaches its minimum value
+--     local minDampener = 0.02 -- Minimum value of the dampener
+
+--     if abs(distance) >= startDistance then
+--         return 1
+--     end
+-- 	if abs(distance) <= endDistance then
+--         return minDampener
+--     end
+-- 	local ratio = (abs(distance) - endDistance) / (startDistance - endDistance)
+-- 	local res = minDampener + (1 - minDampener) * ratio
+-- 	return res
+-- end
+
 local function AxisLimiterEx(cD, axis, atmoLimit, distance)
-	if not cD then inputs.brakeLock = true; P("[E] AxisLimiter") return false end
+	if not cD then inputs.brakeLock = true; return false end
 	axis = axis or "worldDown"
 	atmoLimit = tonumber(atmoLimit) or 1000
 	distance = tonumber(distance) or 1
 	if not vec3.isvector(cD[axis]) then P'Invalid axis' return false end
 
-	local min, abs, sign = math.min, math.abs, utils.sign
+	local min, abs = math.min, math.abs
 	local wAxis, ap, dampener, gC = cD[axis], AutoPilot, 1, globals
-	local dirSign = sign(wAxis.z)
+	local isVertical = axis == "worldDown" or axis == "worldUp"
+	local isLongitudinal = axis == "cFwd" or axis == "cBack"
+	if not (isVertical or isLongitudinal) then return false end
 
 	-- Speed and acceleration along the desired axis
 	local accel = cD.acceleration:dot(wAxis)
-	local currSpeed = cD.velocity.z
+	local currSpeed = isVertical and cD.velocity.z or cD.velocity.y
 
-	local axMax = 1000
+	local axMax = 1080
 	if cD.inAtmo then
-		if cD.altitude > (atmoLimit or 1000) then
+		-- if axis == "worldDown" or cD.altitude > atmoLimit then
+		if vertical and cD.altitude > atmoLimit then
 			axMax = ap.userConfig.landSpeedHigh
-		elseif dirSign < 0 then
+		elseif axis == "worldUp" then
 			axMax = ap.userConfig.landSpeedLow
 		end
-	elseif cD.altitude > 90000 then
+	elseif isVertical and cD.altitude > 90000 then
 		axMax = ap.userConfig.landSpeedLow*0.5
 	end
 	-- Convert to m/s
-	axMax = axMax/3.6
+	axMax = axMax / 3.6
 
 	-- Calculate desired max velocity for selected axis
-	local targetSpeed, absDist, maxSpeed = 0, abs(distance), axMax
-	maxSpeed, _ = kinematics.computeBrakingDistance(cD.vertSpeed, absDist,
-		cD.maxBrake or 0, dirSign > 0 and cD.worldUp or cD.worldDown)
-	if absDist < (cD.inAtmo and 100 or 100) then
-		dampener = 0.75 * calculateLandingScale(absDist,"S",(cD.inAtmo and 100 or 100))
+	local targetSpeed, maxSpeed, absDist = 0, 0, abs(distance)
+
+	maxSpeed, brkDist = kinematics.computeBrakingDistance(
+			isVertical and cD.vertSpeed or cD.forwardSpeed,
+			distance, cD.maxBrake or 0, wAxis)
+	maxSpeed = maxSpeed or axMax -- sanity check to avoid "nan"
+
+	-- Calculate dampening factor based on distance and axis
+	if absDist <= 50 then
+		dampener = calculateLandingScaleOrg(absDist, "S", 50) * (axis == 'worldUp' and 0.90 or 1) * (axis == 'cFwd' and 0.1 or 1)
+	elseif absDist <= 200 then
+		dampener = calculateLandingScaleOrg(absDist, "S", 200) * (axis == 'cFwd' and 0.33 or 1)
+	elseif absDist <= 500 then
+		dampener = calculateLandingScaleOrg(absDist, "S", 500) * (axis == 'cFwd' and 0.66 or 1)
 	end
+
 	-- minimum speed?
 	if cD.isLanded and ship.takeoff then
 		targetSpeed = 20 / 3.6
 	else
 		-- fine-tune maxSpeed a bit as it can be pretty high
-		targetSpeed = min(maxSpeed/(absDist < 50 and 6 or 3),axMax)*dampener*dirSign -- m/s!
+		targetSpeed = axMax
+		if isVertical then
+			targetSpeed = min(maxSpeed/3, axMax)
+		end
 	end
+	-- apply dampener and fix sign for descend
+	targetSpeed = targetSpeed * dampener
+	-- for space descend, extra speed reduction
 	if not cD.inAtmo and ship.landingMode then
 		targetSpeed = targetSpeed * 0.75
+	end
+	if brkDist >= distance then
+		targetSpeed = targetSpeed * 0.33
 	end
 
 	-- targetSpeed now has same sign as "distance", i.e. negative when landing
 	local diffAccel, diffVel = 0, 0
-	if targetSpeed < 0 and currSpeed < targetSpeed then
-		diffVel = (currSpeed - targetSpeed) * dirSign
-	elseif targetSpeed < 0 and currSpeed > targetSpeed then
-		diffVel = (currSpeed - targetSpeed) * dirSign
+	if targetSpeed < 0 and currSpeed ~= targetSpeed then
+		diffVel = currSpeed - targetSpeed
 	else
-		diffVel = (targetSpeed - currSpeed) * dirSign
+		diffVel = (targetSpeed - currSpeed)
 	end
-	if dirSign < 0 and cD.inAtmo then
-		diffVel = diffVel + accel * dampener
+	-- add acceleration only when going down
+	if axis == "worldUp" then
+		diffVel = diffVel + accel * system.getActionUpdateDeltaTime()
 	end
-
 	diffAccel = diffVel / cD.mass
-	local thrustVector = diffAccel * cD.mass * wAxis * dirSign
+    local thrustVector = diffAccel * wAxis * cD.mass
 
-	-- if gC.debug then
-	-- addDbgVal('<br>dirSign', round2(dirSign))
-	-- addDbgVal('<br>distance', round2(ship.targetDist, 3))
-	-- addDbgVal('<br>axMax', round2(axMax, 3))
-	-- addDbgVal('maxSpeed', round2(maxSpeed, 3))
-	-- addDbgVal('dampener', round2(dampener, 3))
-	-- addDbgVal('targetSpeed', round2(targetSpeed, 3))
-	-- addDbgVal('currSpeed', round2(currSpeed, 3))
-	-- addDbgVal('diffVel', round2(diffVel, 3))
-	-- addDbgVal('diffAccel', round2(diffAccel, 3))
-	-- addDbgVal('thrustVector', round2(thrustVector.z, 3))
-	-- end
+-- if gC.debug then
+-- addDbgVal('<br>distance', round2(ship.targetDist, 3))
+-- addDbgVal('axMax', round2(axMax, 3))
+-- addDbgVal('maxSpeed', round2(maxSpeed, 3))
+-- addDbgVal('dampener', round2(dampener, 3))
+-- addDbgVal('targetSpeed', round2(targetSpeed, 3))
+-- addDbgVal('currSpeed', round2(currSpeed, 3))
+-- addDbgVal('diffVel', round2(diffVel, 3))
+-- addDbgVal('diffAccel', round2(diffAccel, 3))
+-- addDbgVal('thrustVector', round2(isVertical and thrustVector.z or thrustVector.y, 3))
+-- end
 	return thrustVector
 end
 
@@ -262,7 +299,7 @@ end
 -- planet's surface if you're moving on or near it. It determines whether to
 -- calculate the distance as a straight line in space or along the surface of
 -- a planet, depending on whether you provide information about the planet's size.
--- function getTravelDistance(cPos, target, body)
+-- function getTravelDistanceV1(cPos, target, body)
 -- 	local msq = math.sqrt
 -- 	-- If body and/or radius are nil, calculate the direct distance
 -- 	if not body or not body.radius then
@@ -285,10 +322,37 @@ end
 -- 	if cosAngle < -1 or cosAngle > 1 then
 -- 		return msq((cPos.x - target.x)^2 + (cPos.y - target.y)^2 + (cPos.z - target.z)^2)
 -- 	end
---
+
 -- 	-- Calculate the distance to be traveled
 -- 	return r * math.acos(cosAngle) + surfDist
 -- end
+
+function getTravelDistance(cPos, target, body)
+	local msqrt, masin = math.sqrt, math.asin
+
+	-- Direct distance calculation if body or radius is not provided
+	if not body or not body.radius then
+		local dx = cPos.x - target.x
+		local dy = cPos.y - target.y
+		return msqrt(dx*dx + dy*dy) -- Only horizontal distance
+	end
+
+	local r = body.radius + cPos.z -- Assuming cPos.z is the altitude above the body's surface
+	local dx = cPos.x - target.x
+	local dy = cPos.y - target.y
+	local horDist = msqrt(dx*dx + dy*dy)
+	-- If the horizontal distance is negligible, return 0
+	if horDist < 0.01 then
+		return 0
+	end
+
+	-- Calculate the arc length on the surface of the planet at the given altitude
+	-- Using the formula s = r * theta, where theta is the central angle in radians
+	local theta = 2 * masin(horDist / (2 * r))
+
+	-- The arc length is the distance travelled at a fixed altitude
+	return r * theta
+end
 
 function isDirectlyAbove(vec1, vec2, margin)
 	if tonumber(margin) == nil then

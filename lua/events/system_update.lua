@@ -1,16 +1,3 @@
--- Event handler for receiving data from the screen
---function onReceiveScreenData(receivedData)
-    -- data = deserialize(receivedData)
-    -- -- Process received data and update local variables as needed
-    -- -- Example: Update elevator stats
-    -- if data.stats then
-    --     elevatorStats = data.stats
-    -- end
---end
-
-deltaTime = system.getUtcTime() - lastTime
-lastTime = deltaTime
-
 function onSystemUpdate()
 	if links.core == nil or construct == nil then return end
 	cData = getConstructData(construct, links.core)

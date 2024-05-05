@@ -1,5 +1,5 @@
 function getConstructData(construct, core)
-	local gC, r2d, abs, atan, sign = globals, constants.rad2deg, math.abs, math.atan, utils.sign
+	local gC, ap, r2d, abs, atan, sign = globals, AutoPilot, constants.rad2deg, math.abs, math.atan, utils.sign
 
 	local wVel = vec3(construct.getWorldVelocity())
 	local worldForward = vec3(construct.getWorldOrientationForward())
@@ -19,12 +19,11 @@ function getConstructData(construct, core)
 		localVert = vec3(0, 0, 1) -- Default to a neutral vertical vector if zero
 	end
 
-	local _cData = {
+	local _cD = {
 		locGrav = localGrav,
 		locVert = localVert,
 		yaw = (atan(-localVert.x, localVert.y) * r2d) % 360,
 		pitch = 180 - (atan(localGrav.y, localGrav.z) * r2d),
-
 		wVert = worldVertical, -- World Vertical, current up vector in world space while on a planet, 0 in space
 		worldUp = worldUp, -- World Up
 		worldDown = -worldUp, -- World Down
@@ -51,7 +50,6 @@ function getConstructData(construct, core)
 		currentRollDeg = currentRollDeg, -- Current Roll Deg
 		currentRollDegAbs = abs(currentRollDeg), -- Current roll Deg Absolute
 		currentRollDegSign = sign(currentRollDeg), -- Current Roll Deg Sign
-		--crossSection = construct.getCrossSection(), -- unused
 		forwardSpeed = wVel:dot(worldForward),
 		lateralSpeed = wVel:dot(-worldRight),
 		vertSpeed = wVel:dot(-worldVertical), -- world downward speed m/s
@@ -73,61 +71,67 @@ function getConstructData(construct, core)
 		hasHovers = links.hoverCount > 0,
 		telemeter = links.telemeter,
 		hasTelemeter = links.telemeter ~= nil and true,
-		telemeterDist = 0,
-		maxHoverDist = 40,
+		telemDist = nil,
+		maxHoverDist = nil,
 		warpOn = construct.isWarping(),
-		-- wCOM = vec3(construct.getWorldCenterOfMass()),
-		-- lCOM = vec3(construct.getCenterOfMass())
+		cFwd = vec3(construct.getForward()),
+		cBack = -vec3(construct.getForward()),
+		-- Currently not used:
+		--cDown = -vec3(construct.getUp()),
+		--cRight = vec3(construct.getRight()),
+		--cUp = vec3(construct.getUp()),
+		--crossSection = construct.getCrossSection(),
+		--wCOM = vec3(construct.getWorldCenterOfMass()),
+		--lCOM = vec3(construct.getCenterOfMass())
 	}
-	_cData.currentRollDegAbs = abs(_cData.currentRollDeg)
-	_cData.currentRollDegSign = sign(_cData.currentRollDeg)
+	_cD.currentRollDegAbs = abs(_cD.currentRollDeg)
+	_cD.currentRollDegSign = sign(_cD.currentRollDeg)
 
-	_cData.altitude = getAltitude(cWP) -- needs body to be set first
-	_cData.hasGndDet = _cData.hasTelemeter or _cData.hasvBoosters or _cData.hasHovers
-	if _cData.hasGndDet then
+	_cD.altitude = getAltitude(cWP) -- needs body to be set first
+	_cD.hasGndDet = _cD.hasTelemeter or _cD.hasvBoosters or _cD.hasHovers
+	if _cD.hasGndDet then
 		-- telemeter has precedence with detection up to 100m
-		if _cData.hasTelemeter then
-			local ray = _cData.telemeter.raycast()
+		if _cD.hasTelemeter then
+			local ray = _cD.telemeter.raycast()
 			if ray.hit then
-				_cData.GrndDist = ray.distance
-				_cData.telemeterDist = _cData.GrndDist
-				--gC.dbgTxt = gC.dbgTxt..'<br>Telemeter: '..round2(ray.distance,2)
+				_cD.telemDist = ray.distance
 			end
 		end
-		if _cData.hasHovers and _cData.atmoDensity > 0.1 then
+		if _cD.hasHovers and _cD.atmoDensity > 0.1 then
 			for _, hv in ipairs(links.hovers) do
 				if type(hv.getMaxDistance) == 'function' then -- Doh! in hovercraft chair this is nil!
-					_cData.maxHoverDist = math.min(_cData.maxHoverDist, hv.getMaxDistance())
+					_cD.maxHoverDist = math.min(_cD.maxHoverDist or 0, hv.getMaxDistance())
 					local dist = hv.getDistance()
-					if dist >= 0.01 and (not _cData.GrndDist or (dist < _cData.GrndDist)) then
-						_cData.GrndDist = dist
+					if dist >= 0.01 and (not _cD.GrndDist or (dist < _cD.GrndDist)) then
+						_cD.GrndDist = dist
 					end
 				end
 			end
 		end
-		if _cData.hasvBoosters then
+		if _cD.hasvBoosters then
 			for _, hv in ipairs(links.vboosters) do
 				if type(hv.getMaxDistance) == 'function' then
-					_cData.maxHoverDist = math.min(_cData.maxHoverDist, hv.getMaxDistance())
+					_cD.maxHoverDist = math.min(_cD.maxHoverDist or 0, hv.getMaxDistance())
 					local dist = hv.getDistance()
-					if dist >= 0.01 and (not _cData.GrndDist or (dist < _cData.GrndDist)) then
-						_cData.GrndDist = dist
+					if dist >= 0.01 and (not _cD.GrndDist or (dist < _cD.GrndDist)) then
+						_cD.GrndDist = dist
 					end
 				end
 			end
 		end
 	end
-	_cData.aboveWater = false
-	if _cData.GrndDist then
-		if AutoPilot.userConfig.agl then
-			_cData.GrndDist = _cData.GrndDist - AutoPilot.userConfig.agl
-		end
-		_cData.GrndDist = round2(_cData.GrndDist or 0,2)
+	_cD.aboveWater = false
+	if _cD.GrndDist or _cD.telemDist then
 		-- ground engines measure down to ground OR sea level (0m altitude)
 		-- BUT telemeter ignores sea level and looks below sea level!
-		_cData.aboveWater = _cData.telemeterDist > _cData.GrndDist
+		_cD.aboveWater = (_cD.telemDist and _cD.GrndDist and _cD.telemDist > _cD.GrndDist) or false
+		_cD.GrndDist = max(_cD.telemDist or 0, _cD.GrndDist or 0)
+		if ap.userConfig.agl then
+			_cD.GrndDist = _cD.GrndDist - ap.userConfig.agl
+		end
+		_cD.GrndDist = round2(_cD.GrndDist or 0,2)
 	end
-	_cData.inAtmo = _cData.atmoDensity > 0
+	_cD.inAtmo = _cD.atmoDensity > 0
 
 	local tkForward = construct.getMaxThrustAlongAxis("all", { vec3(0,1,0):unpack() })
 	local tkUp = construct.getMaxThrustAlongAxis("all", { vec3(0,0,1):unpack() })
@@ -137,20 +141,20 @@ function getConstructData(construct, core)
 	local tkDownSpace = construct.getMaxThrustAlongAxis("fueled thrust space_engine vertical", { vec3(0,0,-1):unpack() })
 	local tkRight = construct.getMaxThrustAlongAxis("all", { vec3(1,0,0):unpack() })
 	local tkOffset = 0
-	if _cData.atmoDensity < 0.1 then tkOffset = 2 end
-	_cData.gravMass = _cData.mass * _cData.G
-	_cData.gravLong = _cData.gravity:dot(worldForward)
-	_cData.gravLat = _cData.gravity:dot(-worldRight)
-	_cData.gravVert = _cData.gravity:dot(-worldUp)
+	if _cD.atmoDensity < 0.1 then tkOffset = 2 end
+	_cD.gravMass = _cD.mass * _cD.G
+	_cD.gravLong = _cD.gravity:dot(worldForward)
+	_cD.gravLat = _cD.gravity:dot(-worldRight)
+	_cD.gravVert = _cD.gravity:dot(-worldUp)
 
 	local virtGravEngine = vec3(
 		library.systemResolution3(
-			{ _cData.wRight:unpack() },
-			{ _cData.wFwd:unpack() },
-			{ _cData.worldUp:unpack() },
-			{ vec3(_cData.gravity * _cData.mass):unpack() }
+			{ _cD.wRight:unpack() },
+			{ _cD.wFwd:unpack() },
+			{ _cD.worldUp:unpack() },
+			{ vec3(_cD.gravity * _cD.mass):unpack() }
 		))
-	_cData.MaxKinematics = {
+	_cD.MaxKinematics = {
 		Forward = math.abs(tkForward[1 + tkOffset] + virtGravEngine.y),
 		Backward = math.abs(tkForward[2 + tkOffset] - virtGravEngine.y),
 		Up = math.abs(tkUp[1 + tkOffset] + virtGravEngine.z),
@@ -161,49 +165,49 @@ function getConstructData(construct, core)
 		Down = math.abs(tkUp[2 + tkOffset] - virtGravEngine.z),
 		Right = math.abs(tkRight[1 + tkOffset] + virtGravEngine.x),
 		Left = math.abs(tkRight[2 + tkOffset] - virtGravEngine.x)}
-	if _cData.atmoDensity >= 0.01 and _cData.atmoDensity < 0.1 then
-		_cData.MaxKinematics.Forward = math.abs((tkForward[1] + tkForward[3]) + virtGravEngine.y)
+	if _cD.atmoDensity >= 0.01 and _cD.atmoDensity < 0.1 then
+		_cD.MaxKinematics.Forward = math.abs((tkForward[1] + tkForward[3]) + virtGravEngine.y)
 	end
-	--_cData.forceRatio = round2(_cData.MaxKinematics.Forward / _cData.MaxKinematics.Up, 4) -- forward-to-vertical force ratio
-	--gC.dbgTxt = gC.dbgTxt .. '<br>Ratio: '.._cData.forceRatio
+	--_cD.forceRatio = round2(_cD.MaxKinematics.Forward / _cD.MaxKinematics.Up, 4) -- forward-to-vertical force ratio
+	--gC.dbgTxt = gC.dbgTxt .. '<br>Ratio: '.._cD.forceRatio
 	if gC.maxBrake and gC.maxBrake > 1 then
-		_cData.maxBrake = gC.maxBrake
+		_cD.maxBrake = gC.maxBrake
 	end
 	local c = 13888.889 -- 50000000 / 3600
-	local v = _cData.constructSpeed
-	_cData.velMag = _cData.wVelAbs:len()
-	_cData.vtolCapable = _cData.MaxKinematics.Up > (_cData.mass * _cData.G)
-	_cData.ySpeedKPH = _cData.forwardSpeed*3.6
-	_cData.xSpeedKPH = _cData.lateralSpeed*3.6
-	_cData.zSpeedKPH = _cData.vertSpeed*3.6
-	_cData.burnSpeedKph = _cData.burnSpeed*3.6
-	_cData.speedKph = v*3.6
-	_cData.brakes = getBrakes(_cData)
-	_cData.orbitalParameters = getOrbitalParameters(_cData)
-	_cData.orbitFocus = getOrbitFocus(_cData)
+	local v = _cD.constructSpeed
+	_cD.velMag = _cD.wVelAbs:len()
+	_cD.vtolCapable = _cD.MaxKinematics.Up > (_cD.mass * _cD.G)
+	_cD.ySpeedKPH = _cD.forwardSpeed*3.6
+	_cD.xSpeedKPH = _cD.lateralSpeed*3.6
+	_cD.zSpeedKPH = _cD.vertSpeed*3.6
+	_cD.burnSpeedKph = _cD.burnSpeed*3.6
+	_cD.speedKph = v*3.6
+	_cD.brakes = getBrakes(_cD)
+	_cD.orbitalParameters = getOrbitalParameters(_cD)
+	_cD.orbitFocus = getOrbitFocus(_cD)
 
 	-- Acceleration per all 3 axis in a vec3()
-	_cData.axisAccel = getAccAllAxes(_cData)
-	_cData.isLanded = tonumber(_cData.GrndDist) ~= nil and _cData.GrndDist < 0.5 and _cData.speedKph < 1
+	_cD.axisAccel = getAccAllAxes(_cD)
+	_cD.isLanded = tonumber(_cD.GrndDist) ~= nil and _cD.GrndDist < 0.5 and _cD.speedKph < 1
 	-- atmoD is a boost factor for low atmo densities,
 	-- e.g. for Thades where it is only 35% or less
-	_cData.atmoD = ternary(_cData.atmoDensity > 0.1, _cData.atmoDensity, 1)
+	_cD.atmoD = ternary(_cD.atmoDensity > 0.1, _cD.atmoDensity, 1)
 
 	-- * other possibly helpful values, that are currently unused:
-	-- _cData.inertia = 1 / math.sqrt(1 - ((v * v) / (c * c)))
-	-- _cData.inertialMass = clamp(_cData.mass * _cData.inertia, _cData.mass, _cData.mass * 1.5)
-	-- _cData.maxLanding = calcMaxLandingSpeed(_cData) -- at last!
+	-- _cD.inertia = 1 / math.sqrt(1 - ((v * v) / (c * c)))
+	-- _cD.inertialMass = clamp(_cD.mass * _cD.inertia, _cD.mass, _cD.mass * 1.5)
+	-- _cD.maxLanding = calcMaxLandingSpeed(_cD) -- at last!
 	-- Extract the dampening values for each axis from the axisDampener vector
-	-- _cData.axisDampener = getGravityInfluencedAvailableDeceleration(_cData)
-	-- _cData.xDamp = vec3(_cData.axisDampener.x, 0, 0)
-	-- _cData.yDamp = vec3(0, _cData.axisDampener.y, 0)
-	-- _cData.zDamp = vec3(0, 0, _cData.axisDampener.z)
-    -- _cData.xDampForce = _cData.xDamp:dot(_cData.wVel)
-    -- _cData.yDampForce = _cData.yDamp:dot(_cData.wVel)
-    -- _cData.zDampForce = _cData.zDamp:dot(_cData.wVel)
+	-- _cD.axisDampener = getGravityInfluencedAvailableDeceleration(_cD)
+	-- _cD.xDamp = vec3(_cD.axisDampener.x, 0, 0)
+	-- _cD.yDamp = vec3(0, _cD.axisDampener.y, 0)
+	-- _cD.zDamp = vec3(0, 0, _cD.axisDampener.z)
+    -- _cD.xDampForce = _cD.xDamp:dot(_cD.wVel)
+    -- _cD.yDampForce = _cD.yDamp:dot(_cD.wVel)
+    -- _cD.zDampForce = _cD.zDamp:dot(_cD.wVel)
 
-	_cData.counterGravForce = -(_cData.mass * localGrav:dot(_cData.wFwd))
-	return _cData
+	_cD.counterGravForce = -(_cD.mass * localGrav:dot(_cD.wFwd))
+	return _cD
 end
 
 function getAccAllAxes(cD, acc)

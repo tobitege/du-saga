@@ -3,9 +3,9 @@ function Kinematics()
 
 local Kinematic = {} -- just a namespace
 
-local ITERATIONS = 100 -- iterations over engine "warm-up" period
+-- local ITERATIONS = 100 -- iterations over engine "warm-up" period
 
--- computeAccelerationTime - solve vf = vi + a*t for t
+--- computeAccelerationTime: solve vf = vi + a*t for t
 ---@param initial number [in]: initial (positive) speed in meters per second.
 ---@param acceleration number [in]: constant acceleration until 'finalSpeed' is reached.
 ---@param final number [in]: the speed at the end of the time interval.
@@ -15,97 +15,56 @@ function Kinematic.computeAccelerationTime(initial, acceleration, final)
 	return (final - initial) / acceleration
 end
 
--- computeBrakingDistance - Calculate the maximum speed that can be reached within the given distance and
--- the distance from the target at which braking must start to ensure the construct stops at the target location.
--- initialSpeed[in]: Vertical speed in meters per second at the time of the call.
--- distance[in]: Distance to the final location above, where the speed must be 0.
--- brakes[in]: Maximum brake force in Newtons that can be utilized in addition to gravity.
--- return: Maximum speed that can be reached (in m/s), and the remaining distance to the target
--- at which braking must start (in meters).
--- function Kinematic.computeBrakingDistanceWorking(initialSpeed, distance, brakes, axis)
--- 	local mass, G = cData.mass, cData.G
--- 	local airFriction = -axis:dot(cData.worldAirFriction)
-
--- 	-- Determine the direction of flight using utils.sign()
--- 	local direction = utils.sign(distance)
-
--- 	-- Get the appropriate maximum thrust based on the direction of flight
--- 	local maxThrust = ternary(direction > 0, cData.MaxKinematics.Up, cData.MaxKinematics.Down)
-
--- 	-- Adjust the total deceleration based on the direction of flight
--- 	local totalDecel = (brakes or 0) + direction * mass * G + airFriction
-
--- 	-- Calculate the effective acceleration considering gravity
--- 	local accel
--- 	if direction > 0 then -- Ascent
--- 		accel = (maxThrust - direction * mass * G) / mass
--- 	else -- Descent
--- 		accel = (maxThrust + direction * mass * G) / mass
--- 	end
-
--- 	-- Calculate the maximum speed that can be reached with the available thrust.
--- 	local maxSpeed = math.sqrt(2 * accel * distance + initialSpeed ^ 2)
-
--- 	-- Ensure that the initial speed is not greater than the maximum speed.
--- 	initialSpeed = math.min(initialSpeed, maxSpeed)
-
--- 	-- Calculate the braking distance required to come to a stop from the maximum speed.
--- 	local brakingDistance = (maxSpeed ^ 2 - initialSpeed ^ 2) / (2 * totalDecel)
-
--- 	-- Calculate the remaining distance to the target at which braking must start.
--- 	local remainingDistance = distance - brakingDistance
-
--- 	-- If the remaining distance is negative, it means we cannot reach the maximum speed safely.
--- 	if remainingDistance < 0 then
--- 		maxSpeed = math.sqrt(initialSpeed ^ 2 + 2 * totalDecel * distance)
--- 		remainingDistance = 0
--- 	end
--- 	return maxSpeed, remainingDistance
--- end
-
+--- computeBrakingDistance: This function calculates the maximum safe speed and
+--- the distance at which braking should begin to reach a target while considering
+--- factors like initial speed, distance, braking force, and axis of movement.
+---@param initialSpeed number [in]: The initial speed of the construct in meters per second.
+---@param distance number [in]: The distance to the target in meters.
+---@param brakes number [opt]: The braking force applied in Newtons.
+---@param axis vec3 [in]: The axis along which the braking is applied.
+---@return number, number The maximum speed that can be safely reached and the remaining distance to the target at which braking must start.
 function Kinematic.computeBrakingDistance(initialSpeed, distance, brakes, axis)
-	local mass, G = cData.mass, cData.G
-	local airFriction = axis:dot(cData.worldAirFriction)
+	local cD = cData
+	local mass, G, airFriction = cD.mass, cD.G, axis:dot(cD.worldAirFriction)
 
 	-- Determine the direction of flight using utils.sign
-	local direction = sign(distance)
+	local direction, absDist = sign(distance), abs(distance)
 
-	-- Get the appropriate maximum thrust based on the direction of flight and axis
-	local maxThrust
+	-- Get the appropriate maximum thrust based on the direction of flight and axis.
+	-- Default to Up, which is used for either vertical direction!
+	local maxThrust = cData.MaxKinematics.Up
 	if axis == cData.wFwd or axis == cData.worldBack then
 		maxThrust = ternary(direction > 0, cData.MaxKinematics.Forward, cData.MaxKinematics.Backward)
-	else
-		maxThrust = ternary(direction > 0, cData.MaxKinematics.Up, cData.MaxKinematics.Down)
 	end
 
 	-- Adjust the total deceleration based on the direction of flight and axis
-	local gravityComponent = 0
+	local grav = 0
 	if axis == cData.worldUp or axis == cData.worldDown then
-		gravityComponent = direction * mass * G * system.getActionUpdateDeltaTime() * 2
+		grav = direction * mass * G * system.getActionUpdateDeltaTime() * 2
 	end
-	local totalDecel = (brakes or 0) + gravityComponent - airFriction
+	local totalDecel = (brakes or 0) + grav - airFriction
 
 	-- Calculate the effective acceleration considering gravity and axis
-	local accel = (maxThrust - direction * gravityComponent) / mass
+	local accel = (maxThrust - direction * grav) / mass
 
 	-- Calculate the maximum speed that can be reached with the available thrust
-	local maxSpeed = math.sqrt(2 * accel * distance + initialSpeed ^ 2)
+	local maxSpeed = math.sqrt(2 * abs(accel * absDist) + initialSpeed ^ 2)
 
 	-- Ensure that the initial speed is not greater than the maximum speed
 	initialSpeed = math.min(initialSpeed, maxSpeed)
 
 	-- Calculate the braking distance required to come to a stop from the maximum speed
-	local brakingDistance = (maxSpeed ^ 2 - initialSpeed ^ 2) / (2 * totalDecel)
+	local brakingDistance = (maxSpeed ^ 2 - initialSpeed ^ 2) / (2 * (totalDecel or 0.000001))
 
 	-- Calculate the remaining distance to the target at which braking must start
-	local remainingDistance = distance - brakingDistance
+	local remainingDistance = absDist - brakingDistance
 
 	-- If the remaining distance is negative, it means we cannot reach the maximum speed safely
 	if remainingDistance < 0 then
-		maxSpeed = math.sqrt(initialSpeed ^ 2 + 2 * totalDecel * distance)
+		maxSpeed = math.sqrt(initialSpeed ^ 2 + 2 * totalDecel * absDist)
 		remainingDistance = 0
 	end
-	return maxSpeed, remainingDistance
+	return maxSpeed * direction, remainingDistance * direction
 end
 
 -- computeDistanceAndTime - Return distance & time needed to reach final speed.
@@ -194,16 +153,16 @@ end
 -- acceleration [in]: constant acceleration until 'distance' is traversed
 -- distance [in]: the distance traveled in meters
 -- return: the time in seconds spent in traversing the distance
-function Kinematic.computeTravelTime(initial, acceleration, distance)
-	-- quadratic equation: t=(sqrt(2ad+v^2)-v)/a
-	if distance == 0 then return 0 end
+-- function Kinematic.computeTravelTime(initial, acceleration, distance)
+-- 	-- quadratic equation: t=(sqrt(2ad+v^2)-v)/a
+-- 	if distance == 0 then return 0 end
 
-	if acceleration ~= 0 then
-		return (math.sqrt(2*acceleration*distance+initial^2) - initial)/acceleration
-	end
-	assert(initial > 0, 'Acceleration and initial speed are both zero.')
-	return distance/initial
-end
+-- 	if acceleration ~= 0 then
+-- 		return (math.sqrt(2*acceleration*distance+initial^2) - initial)/acceleration
+-- 	end
+-- 	assert(initial > 0, 'Acceleration and initial speed are both zero.')
+-- 	return distance/initial
+-- end
 
 return Kinematic
 

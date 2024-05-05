@@ -75,10 +75,11 @@ function HUD.update()
 
 	local widgets = {}
 
-	if gC.debug and Widgets.debugInfo then
-		table.insert(widgets, Widgets.debugInfo)
-		Widgets.debugInfo.anchor = anchorENUM.topLeft
-	end
+	-- commented out to save space!
+	-- if gC.debug and Widgets.debugInfo then
+	-- 	table.insert(widgets, Widgets.debugInfo)
+	-- 	Widgets.debugInfo.anchor = anchorENUM.topLeft
+	-- end
 
 	table.insert(widgets, Widgets.controls)
 	Widgets.controls.anchor = anchorENUM.topRight

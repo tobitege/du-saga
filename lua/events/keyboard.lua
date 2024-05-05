@@ -198,8 +198,8 @@ function onAlt8()
 end
 
 function onAlt9()
-	local cD, gC, ap = cData, globals, AutoPilot
-	if cD.warpOn or ap.enabled then
+	local gC, ap = globals, AutoPilot
+	if cData.warpOn or ap.enabled then
 		return P"[E] Can't toggle now"
 	end
 	if gC.maneuverMode then ship.resetMoving() end
@@ -209,13 +209,6 @@ function onAlt9()
 	setThrottle()
 	navCom:resetCommand(axisCommandId.vertical)
 	navCom:deactivateGroundEngineAltitudeStabilization()
-	-- cD.isLanded = tonumber(cD.GrndDist) ~= nil and cD.GrndDist < 0.5 and cD.speedKph < 1
-	-- if not cD.isLanded then
--- 		navCom:activateGroundEngineAltitudeStabilization()
--- 		if cD.hasGndDet and cD.GrndDist > 1 and not gC.startup then
--- 			navCom:setTargetGroundAltitude(ap.userConfig.hoverHeight)
--- 		end
-	-- end
 end
 
 function onWarpDown() -- Warp drive v
@@ -264,7 +257,7 @@ function onMmbUp() -- Stop engines ^
 end
 
 function onLandingGearDown() -- Landing gear v
-	local cD, gC, ap = cData, globals, AutoPilot
+	local gC, ap = globals, AutoPilot
 
 	-- Reset some states
 	if ap.enabled then ap:toggleState(false) end
@@ -275,7 +268,7 @@ function onLandingGearDown() -- Landing gear v
 	inputs.brake = 0
 	inputs.brakeLock = false
 	-- When already landed, do a liftoff to hover height in active mode
-	if cD.isLanded then
+	if cData.isLanded then
 		ship.landingMode = false
 		-- Liftoff in either mode
 		if not gC.maneuverMode then
@@ -485,7 +478,6 @@ end
 
 function onYawLeftDown()
 	if inputs.yaw < 0 then
-		inputs.yaw = 0
 		ship.rotationSpeed = ship.rotationSpeedMin
 	end
 	inputs.yaw = 1
@@ -501,7 +493,6 @@ end
 
 function onYawRightDown()
 	if inputs.yaw > 0 then
-		inputs.yaw = 0
 		ship.rotationSpeed = ship.rotationSpeedMin
 	end
 	inputs.yaw = -1
@@ -565,11 +556,10 @@ end
 
 function onBrakeLoop() -- Brake >
 	if globals.maneuverMode then inputs.brake = 1 return end
-	local longitudinalCommandType = navCom:getAxisCommandType(axisLong)
-	if longitudinalCommandType == axisCommandType.byTargetSpeed then
-		local targetSpeed = navCom:getTargetSpeed(axisLong)
-		if (math.abs(targetSpeed) > 0.01) then
-			navCom:updateCommandFromActionLoop(axisLong, - utils.sign(targetSpeed))
+	if navCom:getAxisCommandType(axisLong) == axisCommandType.byTargetSpeed then
+		local speed = navCom:getTargetSpeed(axisLong)
+		if (math.abs(speed) > 0.01) then
+			navCom:updateCommandFromActionLoop(axisLong, - utils.sign(speed))
 		end
 	end
 end
@@ -582,7 +572,6 @@ function onBrakeUp() -- Brake ^
 end
 
 function onActionStart(id)
-	-- P("actStart: "..tostring(id))
 	if id == "lalt" then onAlt(true) end
 	if id == "lshift" then onShift(true) end
 	if id == "brake" then onBrakeDown() end
@@ -649,16 +638,16 @@ function onActionStart(id)
 	elseif id == "booster" then
 		onBoosterDown()
 	end
-	if globals.maneuverMode then return end
-	if id == "speedup" then
-		onSpeedUpDown()
-	elseif id == "speeddown" then
-		onSpeedDownDown()
+	if not globals.maneuverMode then
+		if id == "speedup" then
+			onSpeedUpDown()
+		elseif id == "speeddown" then
+			onSpeedDownDown()
+		end
 	end
 end
 
 function onActionEnd(id)
-	-- P("actEnd: "..tostring(id))
 	if id == "lalt" then onAlt(false) end
 	if id == "lshift" then onShift(false) end
 	if id == "brake" then onBrakeUp() end
@@ -698,7 +687,6 @@ function onActionEnd(id)
 end
 
 function onActionLoop(id)
-	-- P("actLoop: "..tostring(id))
 	if id == "groundaltitudeup" then
 		onGroundAltitudeUpDown(true)
 	elseif id == "groundaltitudedown" then
@@ -718,14 +706,15 @@ function onActionLoop(id)
 			onRightDown()
 		end
 	end
-	if globals.maneuverMode then return end
-	if id == "speedup" then
-		onSpeedUpLoop()
-	elseif id == "speeddown" then
-		onSpeedDownLoop()
-	elseif id == "strafeleft" then
-		onLeftArrowDown()
-	elseif id == "straferight" then
-		onRightArrowDown()
+	if not globals.maneuverMode then
+		if id == "speedup" then
+			onSpeedUpLoop()
+		elseif id == "speeddown" then
+			onSpeedDownLoop()
+		elseif id == "strafeleft" then
+			onLeftArrowDown()
+		elseif id == "straferight" then
+			onRightArrowDown()
+		end
 	end
 end

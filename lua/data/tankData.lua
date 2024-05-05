@@ -1,5 +1,6 @@
 tankData = {
 	fuelStr = 'Loading',
+	-- below values are mass (kg), capacity (L) with 0 talents:
 	sizes = {
 		['atmo'] = {
 			['xs'] = {35.03,100},
@@ -105,23 +106,20 @@ function initializeTanks()
 					table.insert(fuels['rocket'], elem)
 				end
 			else
-				P("Could not determine tank size for ["..(elem.kind).."] ["..(elem.maxHp).."]")
+				P("Unknown tank size for ["..(elem.kind).."] ["..(elem.maxHp).."]")
 			end
 		end
 	end
-	--P(tostring(elem.kind))
 end
 
 function updateTanks()
-	local tankData = tankData
-	local curTime = system.getArkTime()
-	local ii = 0
+	local tankData, curTime, ii = tankData, system.getArkTime(), 0
 	for key, list in pairs(fuels) do
 		for _, tank in ipairs(list) do
 			tank.name = tank.name
 		   	tank.lastMass = tank.mass
 		   	tank.mass = links.core.getElementMassById(tank.uid) - tankData.sizes[key][tank.size][1]
-		   	if(tank.mass ~= tank.lastMass) then
+		   	if tank.mass ~= tank.lastMass then
 			  	tank.percent = utils.round((tank.mass / tank.maxMass)*100,0.1)
 			   	tank.lastTimeLeft = tank.timeLeft
 			 	tank.timeLeft = math.floor(tank.mass / ((tank.lastMass - tank.mass) / (curTime - tank.lastTime)))

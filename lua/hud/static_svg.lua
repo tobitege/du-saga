@@ -56,7 +56,7 @@ HUD.staticSVG = {
         <path style="fill: rgb(216, 216, 216); stroke: rgb(21, 0, 255); stroke-width: 3px;" d="M 0.021 50 L 30.168 49.994" transform="matrix(0.707107, -0.707107, 0.707107, 0.707107, -20.704741, 50.014894)" bx:origin="1.658538 1.046562"/>
         </svg>
     ]],
-    maneuverNode2 = [[
+    centerofMass = [[
         <svg viewBox="-74.652 -64 148.511 131.373" >
         <path style="fill: rgb(216, 216, 216); stroke-width: 5px; stroke: rgb(255, 60, 0);" d="M -42.75 -62.99 L 42.25 -63" transform="matrix(-1, 0, 0, -1, 0.01, -125.990009)" bx:origin="0.503 0.5"/>
         <path style="fill: rgb(216, 216, 216); stroke: rgb(255, 60, 0); stroke-width: 3px;" d="M -17.6 -46.39 L 17.4 -46.4" transform="matrix(0, 1, -1, 0, -46.390001, -46.400003)" bx:origin="0.503 0.5"/>

@@ -1,5 +1,7 @@
 # Saga 4.1-beta
 
+## Latest update: 4.1.3 - 2024-05-05
+
 ## Introduction
 
 This is customized version of the lua-based flight script for the game Dual Universe

@@ -12,7 +12,7 @@ function dynamicSVG()
 	local trgtDistance = ''
 
 	if cD.position ~= nil and AutoPilot.target ~= nil then
-		trgtDistance = printDistance((uround(vector.dist(AutoPilot.target,cD.position))), true)
+		trgtDistance = printDistance((round2(vector.dist(AutoPilot.target,cD.position),2)), true)
 	end
 
 	if cD.constructSpeed ~= nil then
@@ -68,28 +68,34 @@ function dynamicSVG()
 <path style="fill: none; stroke: rgb(204, 204, 204);" d="M -77.91 -22.808 L 0.342 -22.808 L 57.5 28.611"/>
 </svg>]],
 		speedBar = [[
-<svg viewBox="-29 -24 72 240" >
+<svg viewBox="-29 -24 72 240">
 <rect width="5" height="200" style="fill: rgb(255, 255, 255); fill-opacity: 0; paint-order: stroke; stroke: rgb(94, 94, 94);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-5" y="-200" bx:origin="0 0"/>
-<rect width="5" height="]]..speedFill..[[" style="stroke: rgb(255, 0, 0); stroke-opacity: 0; fill: rgb(]]..tonumber(rColor)..[[, ]]..tonumber(gColor)..[[, ]]..tonumber(bColor)..[[);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-5" y="-200" bx:origin="0 0"/>
-<text style="white-space: pre; fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size:11px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 2px; text-anchor: middle;" x="1.4" y="-2.6" transform="matrix(1.1, 0, 0, 1, 1, 0)">]]..conSpd..[[</text>
-<text style="fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 14px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 2px; white-space: pre;" transform="matrix(0, -1, 1, 0, -102, 9.5)" x="-100" y="100">Speed</text>
+<rect width="5" height="]]..speedFill..[[" style="stroke: rgb(0,0,0); stroke-opacity: 0; fill: rgb(]]..tonumber(rColor)..[[, ]]..tonumber(gColor)..[[, ]]..tonumber(bColor)..[[);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-5" y="-200" bx:origin="0 0"/>
+<text style="white-space: pre; fill: #eee; font-family:]]..fnt..[[, sans-serif;
+	font-size:12px; paint-order: fill; stroke: #b80000; stroke-width: 3px; text-anchor: middle;"
+	x="1.4" y="-2.6" transform="matrix(1.1, 0, 0, 1, 1, 0)">]]..conSpd..[[</text>
+<text style="fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 12px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 2px; white-space: pre;" transform="matrix(0, -1, 1, 0, -102, 9.5)" x="-100" y="100">Speed</text>
 <text style="fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 10px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 1px; white-space: pre;" x="6" y="5.5">]]..maxSpd..[[</text>
 </svg>]],
 		throttleBar = [[
 <svg viewBox="-29 -24 72 240">
 <rect width="5" height="200" style="fill: rgb(255, 255, 255); fill-opacity: 0; paint-order: stroke; stroke: rgb(94, 94, 94);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-5" y="-200" bx:origin="0 0"/>
-<rect width="5" height="]]..throttleFill..[[" style="stroke: rgb(255, 0, 0); stroke-opacity: 0; fill: rgb(150, 150, 150);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-5" y="-200" bx:origin="0 0"/>
-<text style="white-space: pre; fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 12px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 2px; text-anchor: middle;" x="1.4" y="-2.6" transform="matrix(1.1, 0, 0, 1, 1, 0)">]]..uround(curThrottle)..[[</text>
+<rect width="5" height="]]..throttleFill..[[" style="stroke: rgb(0,0,0); stroke-opacity: 0; fill: rgb(150, 150, 150);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-5" y="-200" bx:origin="0 0"/>
+<text style="white-space: pre; fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 12px; paint-order: fill; stroke: #b80000; stroke-width: 2px; text-anchor: middle;" x="1.4" y="-2.6" transform="matrix(1.1, 0, 0, 1, 1, 0)">]]..uround(curThrottle)..[[</text>
 <text style="fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 14px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 2px; white-space: pre;" transform="matrix(0, -1, 1, 0, -102, 9.5)" x="-100" y="100">]]..tMode..[[</text>
 <text style="fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 10px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 1px; white-space: pre;" x="6" y="5.5">]]..maxThrottle..[[</text>
 </svg>]],
 		altitudeBar = [[
-<svg viewBox="-29 -24 90 240">
-<rect width="5" height="200" style="fill: rgb(255, 255, 255); fill-opacity: 0; paint-order: stroke; stroke: rgb(94, 94, 94);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-5" y="-200" bx:origin="0 0"/>
-<rect width="5" height="]]..altFill..[[" style="stroke: rgb(255, 0, 0); stroke-opacity: 0; fill: rgb(150, 150, 150);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-5" y="-200" bx:origin="0 0"/>
-<text style="white-space: pre; fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 12px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 2px; text-anchor: middle;" x="8" y="-2.6" transform="matrix(1.1, 0, 0, 1, 1, 0)">]]..curAlt..[[</text>
-<text style="fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 14px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 2px; white-space: pre;" transform="matrix(0, -1, 1, 0, -102, 9.5)" x="-100" y="100">Altitude</text>
-<text style="fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 10px; paint-order: fill; stroke: rgb(0, 0, 0); stroke-width: 1px; white-space: pre;" x="8" y="8.5">]]..maxAlt..[[</text>
+<svg viewBox="-39 -24 100 240">
+<rect width="5" height="200" style="fill: rgb(255, 255, 255); fill-opacity: 0; paint-order: stroke; stroke: rgb(94, 94, 94);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-15" y="-200" bx:origin="0 0"/>
+<rect width="5" height="]]..altFill..[[" style="stroke: rgb(0,0,0); stroke-opacity: 0; fill: rgb(150, 150, 150);" transform="matrix(-1, 0, 0, -1, 0, 0)" x="-5" y="-200" bx:origin="0 0"/>
+<text style="white-space: pre; fill: #eee; font-family:]]..fnt..[[, sans-serif;
+	font-size:12px; paint-order: fill; stroke: #b80000; stroke-width: 3px; text-anchor: middle;"
+	x="2" y="-2.6" transform="matrix(1.1, 0, 0, 1, 1, 0)">]]..curAlt..[[</text>
+<text style="fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 14px; paint-order: fill;
+	stroke: rgb(0, 0, 0); stroke-width: 2px; white-space: pre;" transform="matrix(0, -1, 1, 0, -102, 9.5)" x="-100" y="100">Altitude</text>
+<text style="fill: rgb(200, 200, 200); font-family:]]..fnt..[[, sans-serif; font-size: 10px; paint-order: fill;
+	stroke: rgb(0, 0, 0); stroke-width: 1px; white-space: pre;" x="15" y="8.5">]]..maxAlt..[[</text>
 </svg>]]
 	}
 end

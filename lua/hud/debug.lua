@@ -46,8 +46,8 @@ function HUD.constructDebug()
 		end
 		planetStr = br..planetStr..printDistance(dist)
 		if bD2 > dist and dist > 0 then bColor = oRed end
-		html[#html+1] = [[<div class="altBar" style="transform:translate(50vw,50vh)">]]..
-			HUD.dynamicSVG.altitudeBar..eDiv
+		html[#html+1] = getTDiv("altBar", 50, 50, HUD.dynamicSVG.altitudeBar)
+		-- html[#html+1] = [[<div class="altBar" style="transform:translate(50vw,50vh)">]]..HUD.dynamicSVG.altitudeBar..eDiv
 	end
 	html[#html+1] = [[<div class="atmoAlert">Brake Dist = ]]..
 		colorSpan(bColor,printDistance(bD2, true))..planetStr..eDiv
@@ -183,7 +183,7 @@ function HUD.constructDebug()
 		html[#html+1] = getTDivP("dot", targetPoint, HUD.staticSVG.targetReticle)
 		html[#html+1] = getTDivP("dottext", targetPoint, HUD.dynamicSVG.targetReticle2)
 	end
-	html[#html+1] = getTDivP("dot", point2, HUD.staticSVG.maneuverNode)
+	html[#html+1] = getTDivP("dot", point2, HUD.staticSVG.centerofMass)
 	html[#html+1] = getTDivP("dot", point3, HUD.staticSVG.progradeReticle)
 	html[#html+1] = getTDivP("dot", point4, HUD.staticSVG.retrogradeReticle)
 	-- local szBorder = getSafeZoneBorder()

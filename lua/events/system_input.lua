@@ -148,7 +148,8 @@ function onInput(text)
 		elseif action == '/go' then
 			if vec3.isvector(ap.target) then
 				P('Moving to '..Vec3ToPosString(ap.target))
-				ship.travel = gotoTarget(ap.target, true, cD.inAtmo and ap.userConfig.travelAlt or cD.altitude)
+				-- ship.travel = gotoTarget(ap.target, true, cD.inAtmo and ap.userConfig.travelAlt or cD.altitude)
+				ship.travel = gotoTarget(ap.target, true, cD.altitude)
 			end
 		elseif action == '/goalt' then
 			if num2 == nil then return Err(ERR_INV_DIST) end
@@ -165,7 +166,7 @@ function onInput(text)
 			ship.travel = gotoTarget(tmp)
 		elseif action == '/down' then
 			if num2 == nil then return Err(ERR_INV_DIST) end
-			ship.vertical = moveVert(clamp(num2,-200000,0))
+			ship.vertical = moveVert(-clamp(abs(num2),-200000,2000000))
 		elseif action == '/up' then
 			if num2 == nil then return Err(ERR_INV_DIST) end
 			ship.vertical = moveVert(clamp(num2,0,200000))
@@ -295,9 +296,9 @@ function onInput(text)
 		end
 	end
 
-	if action == '/freeze' then
-		player.freeze(not getPlayerData().playerFrozen)
-		P('Frozen = ' ..tostring(getPlayerData().playerFrozen))
+	if action == '/freeze' and not player.isSeated() then
+		player.freeze(not player.isFrozen())
+		P('Frozen = ' ..tostring(player.isFrozen()))
 	end
 
 	if action == '/aggalt' and links.antigrav ~= nil then

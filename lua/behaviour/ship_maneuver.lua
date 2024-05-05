@@ -182,11 +182,33 @@ function STEC()
 		inputs.brakeLock = true
 	end
 
+	function self.trimAngle(cD)
+		if not ((abs(self.angle) <= 0.001) or self.isAbove) then
+			local dmpVal, wUp = self.angle, cD.worldUp
+			-- Calculate the angular acceleration along the reference axis
+			local yAAcc = cD.worldAngularAcceleration:dot(wUp)
+			-- predicted velocity
+			local yAVel = cD.worldAngularVelocity:dot(wUp)
+			local pYVel = yAVel + yAAcc * self.dt
+
+			-- Check if both angular velocity and acceleration are effectively zero and give it a nudge
+			if abs(dmpVal) > 0.01 and abs(yAVel) < 0.01 and abs(yAAcc) < 0.01 then
+				dmpVal = dmpVal + sign(dmpVal) * self.rotationSpeedMin
+			end
+			dmpVal = getDampener('P', dmpVal, 2*math.pi)
+			pYVel = pYVel * dmpVal
+			local dAVel = (self.angle - pYVel) * dmpVal
+			dmpVal = (dAVel - yAVel) * dmpVal
+			self.yawDamp = abs(pYVel) >= 0.15 -- further dampening is needed
+			return wUp * dmpVal
+		end
+		return vec3()
+	end
+
 	function self.applyAltitudeHold(cD, doHoldAlt, tmp, atmp)
 		-- For altitude hold we do not use AP's altitude, because that
 		-- might be drastically changed via user input.
 		-- The pilot may still change altitude via C/SPACE keys manually.
-		local gC = globals
 		if doHoldAlt then
 			-- For now just clamp to +/- 5m difference
 			local deltaAltitude = clamp((self.holdAltitude or cD.altitude) - cD.altitude, -10, 10)
@@ -215,11 +237,9 @@ function STEC()
 	function self.miniPilot(cD, tmpOrg, atmpOrg)
 		if self.gotoLock == nil then return tmpOrg, atmpOrg end
 
-		local tmp = tmpOrg:clone()
-		local atmp = atmpOrg:clone()
-		local gC, ap, rAxis, cPos = globals, AutoPilot, cD.worldUp, cD.position
-		local b, mass = cD.body, cD.mass
-		local targetRadius = 0.02 -- desired precision in meters
+		local tmp, atmp = tmpOrg:clone(), atmpOrg:clone()
+		local gC, ap, cPos = globals, AutoPilot, cD.position
+		local targetRadius, b, mass = 0.02, cD.body, cD.mass
 		self.yawDamp = true
 
 		-- Define the states for the process flow.
@@ -278,17 +298,16 @@ function STEC()
 		-- Preset crucial data points
 		local altDiff = round2(tmpAlt - cD.altitude, 2)
 		local targetDirection = (target - cPos)
-		local dest = targetDirection:normalize()
 		self.targetDist = abs(targetDirection:len())
 		self.angle = -math.rad(getTargetAngle(target))
 		self.isAbove = isDirectlyAbove(cPos, target, 0.3)
 
-		-- if gC.debug then
-		-- addDbgVal('Status', tostring(' ['..(self.state or 'Flight')..']'), true)
-		-- addDbgVal('A Endpoint',round2(tmpAlt,2))
-		-- addDbgVal('A WP',round2(tmpAlt,2))
-		-- addDbgVal('A Diff',altDiff)
-		-- end
+-- if gC.debug then
+-- addDbgVal('Status', tostring(' ['..(self.state or 'Flight')..']'), true)
+-- addDbgVal('A Endpoint',round2(tmpAlt,2))
+-- addDbgVal('A WP',round2(tmpAlt,2))
+-- addDbgVal('A Diff',altDiff)
+-- end
 
 		-- frame time
 		self.dt = clamp(system.getActionUpdateDeltaTime(),0.0015,0.5)
@@ -307,13 +326,12 @@ function STEC()
 
 			--TODO actually for /vertical and /goAlt commands we should
 			-- use the starting location as reference point, and not
-			-- the current location as that may bring deviations in.
+			-- the current location as that may bring deviations in?
 
 			-- If going down AND ground detected earlier than anticipated,
 			-- update altDiff and target to avoid premature collision!
-			local downward = altDiff < 0
-			if downward and cD.GrndDist and (cD.GrndDist <= abs(altDiff)) then
-				altDiff = cD.GrndDist -- + cD.vertSpeed -- safety (vertSpeed is < 0!)
+			if altDiff < 0 and cD.GrndDist and (cD.GrndDist <= abs(altDiff)) then
+				altDiff = cD.GrndDist
 				self.gotoLock = self.movePosAltitude(cPos, -altDiff)
 				-- re-assign target so the marker gets updated
 				target = self.gotoLock:clone()
@@ -321,11 +339,10 @@ function STEC()
 				tmpAltOrg = tmpAlt
 			end
 			targetDirection = target - cPos
-			dest = targetDirection:normalize()
 			self.targetDist = abs(targetDirection:len() - targetRadius)
 
 			-- target is already the temp waypoint, check for bailout
-			if (self.targetDist <= targetRadius) or
+			if (self.targetDist <= targetRadius) or (abs(altDiff) <= 0.1) or
 				((self.takeoff or self.vertical) and self.targetDist <= 0.1) or
 				(self.landingMode and self.GrndDist and self.GrndDist <= 0.2)
 			 then
@@ -348,13 +365,6 @@ function STEC()
 					self.switchState('ALIGNING')
 				end
 			else
-				local force = tmp:dot(targetDirection)
-				brkDist, _ = kinematics.computeDistanceAndTime(cD.vertSpeed, 0, mass, force, 0, cD.maxBrake)
-				-- if necessary, shorten the target distance so that thrust is corrected below
-				if (brkDist >= (self.targetDist - targetRadius)) or self.targetDist < targetRadius then
-					self.targetDist = self.targetDist - brkDist
-				end
-
 				-- need to estimate the altitude which splits between high and low
 				-- altitude speed limit: surfaceAverageAltitude works for all planets incl. Thades
 				local atmoLimit = 1000 -- meters
@@ -363,95 +373,80 @@ function STEC()
 					atmoLimit = atmoLimit + b.surfaceAverageAltitude
 				end
 
-				-- * Speed limits
-				delta = vec3()
-				local axis = (self.landingMode or altDiff < 0) and 'worldDown' or 'worldUp'
+				-- * Vertical speed limit
+				-- local axis = (self.takeoff or self.vertical) and 'worldDown' or 'worldUp'
+				local axis = (self.landingMode or altDiff < 0) and 'worldUp' or 'worldDown'
+
 				local res = AxisLimiter(cD, axis, atmoLimit, altDiff)
-				if res and vec3.isvector(res) then delta.z = -res.z else self.resetMoving()end
+				if res and vec3.isvector(res) then delta.z = res.z else self.resetMoving() end
 
 				-- convert delta to world vec3
 				delta = localToWorld(delta, cD.worldUp, cD.wRight, cD.wFwd)
 				tmp = tmp - (delta * mass * cD.G)
 			end
 		elseif self.state == "ALIGNING" then
-			if abs(self.angle) <= 0.001 then
+			if abs(self.angle) <= 0.0008 then
 				self.travelAltitude = cD.altitude
 				if cD.inAtmo then
 					self.travelAltitude = min(cD.altitude, ap.userConfig.travelAlt)
 				end
+				self.holdAltitude = self.travelAltitude
 				self.switchState('TRAVERSING')
 			else
 				-- try to align very precisely
-				if not ((abs(self.angle) <= 0.001) or self.isAbove) then
-					local dmpVal = self.angle
-					-- Calculate the angular acceleration along the reference axis
-					local yAAcc = cD.worldAngularAcceleration:dot(rAxis)
-					-- predicted velocity
-					local yAVel = cD.worldAngularVelocity:dot(rAxis)
-					local pYVel = yAVel + yAAcc * self.dt
-
-					-- Check if both angular velocity and acceleration are effectively zero and give it a nudge
-					if abs(dmpVal) > 0.01 and abs(yAVel) < 0.01 and abs(yAAcc) < 0.01 then
-						dmpVal = dmpVal + sign(dmpVal) * self.rotationSpeedMin
-					end
-					dmpVal = getDampener('P', dmpVal, 2*math.pi)
-					pYVel = pYVel * dmpVal
-					local dAVel = (self.angle - pYVel) * dmpVal
-					dmpVal = (dAVel - yAVel) * dmpVal
-					atmp = atmp + rAxis * dmpVal
-					self.yawDamp = abs(pYVel) >= 0.15 -- further dampening is needed
-				end
+				atmp = atmp + self.trimAngle(cD)
 			end
 		elseif self.state == "TRAVERSING" then
 			-- Before we set new target/targetDistance, check if we are closer
-			-- than 100m to disable altitude hold early
-			gC.altitudeHold = self.targetDist >= 100
+			-- than 50m to disable altitude hold early
+			gC.altitudeHold = self.targetDist >= 50
 			if gC.altitudeHold and not self.holdAltitude then
 				self.holdAltitude = gC.holdAltitude
 			end
 
+			-- check for angle adjustment
+			atmp = atmp + self.trimAngle(cD)
+
 			-- Move interim target to waypoint over final target
 			-- The travelAltitude was already set in ALIGNING state
-			--target = self.movePosAltitude(self.gotoLock, cD.altitude - getAltitude(self.gotoLock))
 			target = self.movePosAltitude(self.gotoLock, cD.altitude - self.holdAltitude)
-			targetDirection = target - cPos
-			dest = targetDirection:normalize()
+			self.targetVector = (target - cPos):normalize()
 			self.isAbove = isDirectlyAbove(cPos, target, 0.3)
-			self.targetVector = dest
-			self.targetDist = abs(targetDirection:len())
 
-			brkDist, _ = kinematics.computeDistanceAndTime(cD.forwardSpeed,
-				0, mass, cD.MaxKinematics.Forward, 0, cD.maxBrake)
-
-			-- if necessary, shorten the target distance so that thrust is corrected below
-			if (brkDist >= (self.targetDist - targetRadius)) or self.targetDist < targetRadius then
-				self.targetDist = self.targetDist - brkDist
-			end
-			-- If getting close to target, then no multiplier
-			local mult = ternary(((self.targetDist < 100) or self.isAbove or not cD.inAtmo), 1, self.IDIntensity)
-			delta = dest * mass * clamp(self.targetDist * 3.6, 1, abs(speed) * mult)
+			-- angleSign of -1 means the target is behind us
+			local angleSign = (self.angle >= (-math.pi / 2)) and (self.angle <= (math.pi / 2)) and 1 or -1
+			local locPos = worldToLocal(cPos)
+			local locTrg = worldToLocal(target)
+			self.targetDist = angleSign * getTravelDistance(locTrg, locPos, cD.body)
 
 			-- Correct sideways movement
 			self.latPID:reset()
 			self.latPID:inject(cD.lateralSpeed * self.dt)
 			local latCorr = self.latPID:get()
-			tmp = tmp + cD.wRight * latCorr
+			delta = delta + cD.wRight * latCorr
 
-			-- Separate vertical and forward components from delta
-			local vertDelta = cD.worldUp * delta:dot(cD.worldUp)
-			local fwdDelta = delta - vertDelta
-			if self.targetDist > 0.5 then
-				tmp = tmp + fwdDelta * (1 - brkDist / self.targetDist)
+			if self.targetDist > 0 then
+				-- * Longitudinal speed limit
+				local res = AxisLimiter(cD, 'cFwd', speed, self.targetDist)
+				if res and vec3.isvector(res) then delta.y = res.y else self.resetMoving() end
+
+				-- convert delta to world vec3
+				delta = localToWorld(delta, cD.worldUp, cD.wRight, cD.wFwd)
+				tmp = tmp + (delta * mass * cD.G)
 			end
 
 			-- Check if we're close enough to land
-			if (self.isAbove or self.targetDist <= 0.5) and math.abs(cD.forwardSpeed) < 0.5 then
+			--(angleSign < 0) or
+			if ((self.isAbove or self.targetDist <= 0.2) and math.abs(cD.forwardSpeed) < 1) then
 				-- if we just reached the interim point above the actual target,
 				-- reset the destination to the final target
 				self.resetFlags()
 				self.prepLanding()
 				self.landingMode = true
 				self.switchState('LANDING')
+			-- elseif angleSign < 0 then --we overshot?!
+			-- 	self.switchState()
+			-- 	self.resetFlags()
 			end
 		end
 		return tmp, atmp
@@ -576,7 +571,7 @@ function STEC()
 
 		if self.landingMode and landed and not gC.startup then
 			self.state = 'LANDED'
-			return -- self.stopLanding()
+			return
 		end
 
 		-- Yaw inertial dampening
@@ -633,7 +628,7 @@ function STEC()
 			-- MUST use local coordinates here or above code would need a rewrite!
 			if chg then
 				delta = localToWorld(delta, cD.worldUp, cD.wRight, cD.wFwd)
-				tmp = tmp - (delta * mass * cD.G)
+				tmp = tmp - (delta * cD.G * mass)
 			end
 		end
 		if not (isStartup or landed or self.landingMode or inputs.down) then
@@ -725,9 +720,14 @@ function shipLandingTask(cD)
 	if not ship.landingMode then return end
 	local dist = cD.altitude
 	-- If a body is close then don't use plain 0 but an estimate
-	if cD.body and tonumber(cD.body.surfaceMaxAltitude) ~= nil then
+	if cD.body then
+		local surfAvg = tonumber(cD.body.surfaceAverageAltitude)
 		-- do NOT use surfaceMinAltitude!!!
-		dist = dist - cD.body.surfaceAverageAltitude
+		if cD.body.name == 'Thades' then
+			dist = dist - 13700
+		-- elseif cD.altitude > surfAvg then
+		-- 	dist = dist - surfAvg
+		end
 	end
 	-- Try to land into AGG altitude if AGG present and active
 	local agg = links.antigrav
@@ -741,11 +741,11 @@ function shipLandingTask(cD)
 	---@TODO how treat fishy distances??
 	-- If fishy, try 1km
 	if dist < 0 and cD.altitude == 0 then dist = 1000 end
-	-- Always use detected ground distance (< 100m)
+	-- Always use detected ground distance (if <= 100m)
 	if cD.GrndDist and cD.GrndDist > 0 then
 		dist = cD.GrndDist
 	end
-	local a = ship.moveWaypointZ(cD, -dist + 0.25)
+	local a = ship.moveWaypointZ(cD, -dist + 0.1)
 	gotoTarget(a)
 	ship.landingMode = true -- needs to be re-set!
 end
