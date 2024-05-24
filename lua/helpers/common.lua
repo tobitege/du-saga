@@ -241,17 +241,19 @@ local function AxisLimiterEx(cD, axis, atmoLimit, distance)
 		diffVel = (targetSpeed - currSpeed)
 	end
 	-- add acceleration only when going down
-	local sign = 1
+	local sg = 1
 	if axis == "worldUp" then
-		sign = -1
 		diffVel = diffVel + accel * system.getActionUpdateDeltaTime()
+		sg = -1 * utils.sign(cD.locVert.x)
+	elseif axis == "worldDown" then
+		sg = 1 * utils.sign(cD.locVert.x)
 	end
 	diffAccel = diffVel / cD.mass
-    local thrustVector = diffAccel * cD.mass
-	if axis == "worldUp" then
-		thrustVector = thrustVector * sign * cD.gravity
+    local thrustVector = vec3()
+	if axis == "worldUp" or axis == "worldDown" then
+		thrustVector = diffAccel * cD.mass * sg * cD.gravity
 	else
-		thrustVector = thrustVector * wAxis
+		thrustVector = diffAccel * cD.mass * wAxis
 	end
 
 -- if gC.debug then
