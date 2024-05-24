@@ -6,18 +6,6 @@ function onSystemUpdate()
 	warpData = getWarpData()
 	scrnData = {}
 
-	---@TODO elevator screen handling
-	-- -- Check for data from the screen
-	-- if links.screen then
-	-- 	local data = {}
-	-- 	local receivedData = links.screen.getScriptOutput()
-	-- 	local tp = type(receivedData)
-	-- 	if tp == 'string' then
-	-- 		globals.dbgTxt = 'data: '..receivedData
-	-- 		if receivedData ~= 'ack' then end
-	-- 	end
-	-- end
-
 	-- Axis	Description				Dir
 	-- Axis0	Roll				+
 	-- Axis1	Pitch				+

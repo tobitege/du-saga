@@ -374,15 +374,14 @@ function STEC()
 				end
 
 				-- * Vertical speed limit
-				-- local axis = (self.takeoff or self.vertical) and 'worldDown' or 'worldUp'
 				local axis = (self.landingMode or altDiff < 0) and 'worldUp' or 'worldDown'
-
 				local res = AxisLimiter(cD, axis, atmoLimit, altDiff)
-				if res and vec3.isvector(res) then delta.z = res.z else self.resetMoving() end
-
-				-- convert delta to world vec3
-				delta = localToWorld(delta, cD.worldUp, cD.wRight, cD.wFwd)
-				tmp = tmp - (delta * mass * cD.G)
+				if res and vec3.isvector(res) then
+					delta.z = res.z
+					-- convert delta to world vec3
+					delta = localToWorld(delta, cD.worldUp, cD.wRight, cD.wFwd)
+					tmp = tmp - (delta * mass * cD.G)
+				else self.resetMoving() end
 			end
 		elseif self.state == "ALIGNING" then
 			if abs(self.angle) <= 0.0008 then

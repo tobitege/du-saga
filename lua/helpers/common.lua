@@ -144,7 +144,7 @@ function getDampener(ftype, x, range)
 end
 
 function calculateLandingScaleOrg(gDist, ftype, range)
-	local x = tonumber(gDist) or 100
+	local x = math.abs(tonumber(gDist) or 100)
 	local scale = getDampener(ftype, x, range or 100)
 	return clamp(scale, 0.1, 0.99)
 end
@@ -241,11 +241,13 @@ local function AxisLimiterEx(cD, axis, atmoLimit, distance)
 		diffVel = (targetSpeed - currSpeed)
 	end
 	-- add acceleration only when going down
+	local sign = 1
 	if axis == "worldUp" then
+		sign = -1
 		diffVel = diffVel + accel * system.getActionUpdateDeltaTime()
 	end
 	diffAccel = diffVel / cD.mass
-    local thrustVector = diffAccel * wAxis * cD.mass
+    local thrustVector = diffAccel * sign * cD.gravity * cD.mass
 
 -- if gC.debug then
 -- addDbgVal('<br>distance', round2(ship.targetDist, 3))
@@ -256,7 +258,7 @@ local function AxisLimiterEx(cD, axis, atmoLimit, distance)
 -- addDbgVal('currSpeed', round2(currSpeed, 3))
 -- addDbgVal('diffVel', round2(diffVel, 3))
 -- addDbgVal('diffAccel', round2(diffAccel, 3))
--- addDbgVal('thrustVector', round2(isVertical and thrustVector.z or thrustVector.y, 3))
+-- addDbgVal('thrustVector', round2(isVertical and thrustVector.z or 0, 3))
 -- end
 	return thrustVector
 end

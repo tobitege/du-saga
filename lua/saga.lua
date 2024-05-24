@@ -88,7 +88,7 @@ dockWidget = true --export: Show docking widget (toggle with /dock command)
 maxLandingSpeedHigh = 200 --export Maneuver mode: Max landing speed above 1 km altitude. Default: 200
 maxLandingSpeedLow = 100 --export Maneuver mode: Max landing speed below 1 km altitude. Default: 100
 travelAlt = 900 --export Maneuver mode: default travel altitude for AP targets. Default: 900
-DEBUG = true --export Enable some debug output
+DEBUG = false --export Enable some debug output
 
 globals = {
 	advAtmoEngines = false,

@@ -85,9 +85,9 @@ function Widgets.infos:build()
 	-- if tonumber(cD.MaxKinematics.DownSpace) ~= nil then
 	-- 	s[#s+1] = 'Down: '..round2(cD.MaxKinematics.DownSpace/1000,2)..' kN'
 	-- end
-	if type(gC.dbgTxt) == "string" and gC.dbgTxt ~= "" then
-		s[#s+1] = gC.dbgTxt
-	end
+	-- if type(gC.dbgTxt) == "string" and gC.dbgTxt ~= "" then
+		-- s[#s+1] = gC.dbgTxt
+	-- end
 	self.rowCount = #s
 	return table.concat(s, '<br>')
 end
