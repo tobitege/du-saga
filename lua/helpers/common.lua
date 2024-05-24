@@ -247,7 +247,12 @@ local function AxisLimiterEx(cD, axis, atmoLimit, distance)
 		diffVel = diffVel + accel * system.getActionUpdateDeltaTime()
 	end
 	diffAccel = diffVel / cD.mass
-    local thrustVector = diffAccel * sign * cD.gravity * cD.mass
+    local thrustVector = diffAccel * cD.mass
+	if axis == "worldUp" then
+		thrustVector = thrustVector * sign * cD.gravity
+	else
+		thrustVector = thrustVector * wAxis
+	end
 
 -- if gC.debug then
 -- addDbgVal('<br>distance', round2(ship.targetDist, 3))

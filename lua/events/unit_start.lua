@@ -79,7 +79,7 @@ end
 
 function printHello()
 	P'HUD/Autopilot by Sagacious, Mayumi and CodeInfused'
-	P('v4.1.4')
+	P('v4.1.5')
 	P'Customized by tobitege (2024-05-24)'
 end
 
