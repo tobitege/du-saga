@@ -164,15 +164,12 @@ function STEC()
 	end
 
 	function self.stopLanding()
-		local gC, ap = globals, AutoPilot
+		local gC = globals
 		self.resetMoving()
 		self.targetVector = nil
 		self.landingMode = false
 		if not gC.startup then
-			-- ap:toggleLandingMode(false)
-			-- if gC.prevStdMode then gC.maneuverMode = false end
 			if gC.prevStdMode then
-				-- gC.maneuverMode = false
 				gC.maneuverMode = true --needed for toggling
 				onAlt9()
 			end
@@ -183,7 +180,7 @@ function STEC()
 	end
 
 	function self.trimAngle(cD)
-		if not ((abs(self.angle) <= 0.001) or self.isAbove) then
+		if not ((abs(self.angle) <= 0.0008) or self.isAbove) then
 			local dmpVal, wUp = self.angle, cD.worldUp
 			-- Calculate the angular acceleration along the reference axis
 			local yAAcc = cD.worldAngularAcceleration:dot(wUp)
@@ -243,13 +240,13 @@ function STEC()
 		self.yawDamp = true
 
 		-- Define the states for the process flow.
-		local states = {
-			"ALTITUDE",		-- adjust altitude vertically
-			"ALIGNING",		-- align to target
-			"TRAVERSING",	-- traverse to target
-			"LANDING",		-- landing mode
-			"LANDED"		-- landed
-		}
+		-- local states = {
+		-- 	"ALTITUDE",		-- adjust altitude vertically
+		-- 	"ALIGNING",		-- align to target
+		-- 	"TRAVERSING",	-- traverse to target
+		-- 	"LANDING",		-- landing mode
+		-- 	"LANDED"		-- landed
+		-- }
 
 		-- Map externally set flags to current state
 		if self.landingMode then
@@ -374,26 +371,30 @@ function STEC()
 				end
 
 				-- * Vertical speed limit
-				local axis = (self.landingMode or altDiff < 0) and 'worldUp' or 'worldDown'
+				local axis = (self.landingMode or altDiff < 0) and 'worldDown' or 'worldUp'
 				local res = AxisLimiter(cD, axis, atmoLimit, altDiff)
 				if res and vec3.isvector(res) then
 					delta.z = res.z
 					-- convert delta to world vec3
 					delta = localToWorld(delta, cD.worldUp, cD.wRight, cD.wFwd)
-					tmp = tmp - (delta * mass * cD.G)
+					tmp = tmp + (delta * mass * cD.gravVert)
 				else self.resetMoving() end
 			end
 		elseif self.state == "ALIGNING" then
 			if abs(self.angle) <= 0.0008 then
 				self.travelAltitude = cD.altitude
 				if cD.inAtmo then
-					self.travelAltitude = min(cD.altitude, ap.userConfig.travelAlt)
+					self.travelAltitude = max(cD.altitude, ap.userConfig.travelAlt)
 				end
 				self.holdAltitude = self.travelAltitude
 				self.switchState('TRAVERSING')
 			else
 				-- try to align very precisely
-				atmp = atmp + self.trimAngle(cD)
+				if self.angle > 1 then
+					self.switchState('ALIGNING')
+				else
+					atmp = atmp + self.trimAngle(cD)
+				end
 			end
 		elseif self.state == "TRAVERSING" then
 			-- Before we set new target/targetDistance, check if we are closer
@@ -427,11 +428,12 @@ function STEC()
 			if self.targetDist > 0 then
 				-- * Longitudinal speed limit
 				local res = AxisLimiter(cD, 'cFwd', speed, self.targetDist)
-				if res and vec3.isvector(res) then delta.y = res.y else self.resetMoving() end
-
-				-- convert delta to world vec3
-				delta = localToWorld(delta, cD.worldUp, cD.wRight, cD.wFwd)
-				tmp = tmp + (delta * mass * cD.G)
+				if res and vec3.isvector(res) then
+					delta.y = res.y
+					-- convert delta to world vec3
+					delta = localToWorld(delta, cD.worldUp, cD.wRight, cD.wFwd)
+					tmp = tmp + (delta * mass * cD.gravVert)
+				else self.resetMoving() end
 			end
 
 			-- Check if we're close enough to land
@@ -580,7 +582,7 @@ function STEC()
 			local dot = cD.wFwd:dot(cD.angularAirFriction)
 			local modifiedVelocity = (speed - dot)
 			local desired = cD.wFwd * modifiedVelocity
-			tmp = tmp + ((desired - cD.wVel) * mass * cD.G)
+			tmp = tmp + ((desired - cD.wVel) * mass * cD.gravVert)
 		end
 
 		-- * Inertial Dampening
@@ -601,7 +603,7 @@ function STEC()
 				if (cD.inAtmo and cD.ySpeedKPH > (cD.burnSpeedKph - 50)) then
 					delta.y = locV.y * 2
 				elseif (gC.rotationDampening and inputs.pitch == 0
-						and not (self.mmbThrottle or self.alternateCM)) then
+						and not (self.mmbThrottle or self.alternateCM or self.state == "TRAVERSING")) then
 					delta.y = locV.y
 				end
 				chg = true
@@ -611,7 +613,7 @@ function STEC()
 			-- do not dampen if miniPilot is active (gotoLock) or user input
 			if not (self.gotoLock or inputs.up or inputs.down) then
 				---@TODO this is a bit messy, in space trying to counter some down movement
-				if not cD.inAtmo and not self.vertical and cD.G > 9.9
+				if not cD.inAtmo and not self.vertical and cD.gravVert > 9.9
 					and cD.GrndDist and cD.GrndDist >= 0 and cD.GrndDist < 10 then
 					delta.z = (locV.z * 1.5)
 				else
@@ -623,7 +625,7 @@ function STEC()
 			-- MUST use local coordinates here or above code would need a rewrite!
 			if chg then
 				delta = localToWorld(delta, cD.worldUp, cD.wRight, cD.wFwd)
-				tmp = tmp - (delta * cD.G * mass)
+				tmp = tmp - (delta * cD.gravVert * mass)
 			end
 		end
 		if not (isStartup or landed or self.landingMode or inputs.down) then
@@ -644,7 +646,6 @@ function STEC()
 				self.throttle = round2(cD.speedKph,0)
 			end
 		end
-
 		-- If in hover-range AND user selected 'primary' as engines,
 		-- only use ground engines to save fuel
 		local p1tag = self.priorityTags1

@@ -234,27 +234,22 @@ local function AxisLimiterEx(cD, axis, atmoLimit, distance)
 	end
 
 	-- targetSpeed now has same sign as "distance", i.e. negative when landing
-	local diffAccel, diffVel = 0, 0
+	local diffAccel, diffV = 0, 0
 	if targetSpeed < 0 and currSpeed ~= targetSpeed then
-		diffVel = currSpeed - targetSpeed
+		diffV = currSpeed - targetSpeed
 	else
-		diffVel = (targetSpeed - currSpeed)
+		diffV = targetSpeed - currSpeed
 	end
-	-- add acceleration only when going down
-	local sg = 1
-	if axis == "worldUp" then
-		diffVel = diffVel + accel * system.getActionUpdateDeltaTime()
-		sg = -1 * utils.sign(cD.locVert.x)
-	elseif axis == "worldDown" then
-		sg = 1 * utils.sign(cD.locVert.x)
-	end
-	diffAccel = diffVel / cD.mass
-    local thrustVector = vec3()
+	-- for simplicity, for vertical axis we just set -1 or 1 as Z axis
 	if axis == "worldUp" or axis == "worldDown" then
-		thrustVector = diffAccel * cD.mass * sg * cD.gravity
-	else
-		thrustVector = diffAccel * cD.mass * wAxis
+		if axis == "worldUp" then
+			-- counter gravity when moving down
+			diffV = diffV + accel * system.getActionUpdateDeltaTime()
+		end
+		wAxis = vec3(0,0, axis == "worldUp" and 1 or -1)
 	end
+	diffAccel = diffV / cD.mass
+    local thrustVector = diffAccel * wAxis * cD.mass
 
 -- if gC.debug then
 -- addDbgVal('<br>distance', round2(ship.targetDist, 3))
@@ -263,8 +258,7 @@ local function AxisLimiterEx(cD, axis, atmoLimit, distance)
 -- addDbgVal('dampener', round2(dampener, 3))
 -- addDbgVal('targetSpeed', round2(targetSpeed, 3))
 -- addDbgVal('currSpeed', round2(currSpeed, 3))
--- addDbgVal('diffVel', round2(diffVel, 3))
--- addDbgVal('diffAccel', round2(diffAccel, 3))
+-- addDbgVal('diffV', round2(diffV, 3))
 -- addDbgVal('thrustVector', round2(isVertical and thrustVector.z or 0, 3))
 -- end
 	return thrustVector

@@ -100,7 +100,7 @@ function getConstructData(construct, core)
 		if _cD.hasHovers and _cD.atmoDensity > 0.1 then
 			for _, hv in ipairs(links.hovers) do
 				if type(hv.getMaxDistance) == 'function' then -- Doh! in hovercraft chair this is nil!
-					_cD.maxHoverDist = math.min(_cD.maxHoverDist or 0, hv.getMaxDistance())
+					_cD.maxHoverDist = math.max(_cD.maxHoverDist or 0, hv.getMaxDistance())
 					local dist = hv.getDistance()
 					if dist >= 0.01 and (not _cD.GrndDist or (dist < _cD.GrndDist)) then
 						_cD.GrndDist = dist
@@ -111,7 +111,7 @@ function getConstructData(construct, core)
 		if _cD.hasvBoosters then
 			for _, hv in ipairs(links.vboosters) do
 				if type(hv.getMaxDistance) == 'function' then
-					_cD.maxHoverDist = math.min(_cD.maxHoverDist or 0, hv.getMaxDistance())
+					_cD.maxHoverDist = math.max(_cD.maxHoverDist or 0, hv.getMaxDistance())
 					local dist = hv.getDistance()
 					if dist >= 0.01 and (not _cD.GrndDist or (dist < _cD.GrndDist)) then
 						_cD.GrndDist = dist

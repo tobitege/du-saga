@@ -1,6 +1,6 @@
 # Saga 4.1-beta
 
-## Latest update: 4.1.5 - 2024-05-24
+## Latest update: 4.1.6 - 2024-05-26
 
 ## Introduction
 
@@ -339,24 +339,8 @@ click the piloting chair/remote controller to get the "Advanced" menu.
 Then click the menu item "Paste Lua configuration from clipboard"
 to have the script installed on it.
 
-## TODO
-
-Depending on remaining allowed code size, I'd like to add some QoL features,
-that I've got accustomed to on e.g. ArchHUD.
-Some things I might actually move/revive as part of a companion programming board script.
-
-- Add AGG altitude and orientation to route points (incl. databank storage)
-- Hotkeys to up/down AGG target altitude in flight, e.g. ALT+Shift+Up/Down or similar
-- Allow to change AP's default atmo flight altitude (separate of Alt-Hold altitude)
-- Configurable max. atmo speed for Maneuver mode (currently burn speed - 100)
-- revive AR planets/moons -> companion board
-
 ## Credits
 
 Credits go to the original authors of Saga, Horizon and Default++.
 
 Thanks to Matt (**Wolfram** ingame) for [DU-LuaC](https://github.com/wolfe-labs/DU-LuaC)
-
-Credits to **1337joe** for the [du-mocks](https://github.com/1337joe/du-mocks) project.
-Note: the included version in the util/dumocks folder is customized in several places
-to improve debugging experience: do not replace with another version!

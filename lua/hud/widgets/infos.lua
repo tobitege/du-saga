@@ -41,7 +41,9 @@ function Widgets.infos:build()
 	--s[#s+1] = 'Crossection = ' .. round2(cD.crossSection,3)
 	-- s[#s+1] = 'G = ' .. round2(cD.G,3)
 	s[#s+1] = '<br>Burn Protection = ' .. tostring(ap.userConfig.throttleBurnProtection)
-	s[#s+1] = 'Max Space V = ' .. tostring(rnd(ap.maxSpaceSpeed))
+	if not cD.inAtmo then
+		s[#s+1] = 'Max Space V = ' .. tostring(rnd(ap.maxSpaceSpeed))
+	end
 	s[#s+1] = 'Brake Dist = ' .. printDistance(cD.brakes.distance, true)
 	s[#s+1] = 'Mass = ' .. rnd(cD.mass/1000, 3) .. ' T'
 	if gC.altitudeHold and gC.holdAltitude > 0 then
@@ -76,17 +78,19 @@ function Widgets.infos:build()
 		end
 		if ship.angle then
 			s[#s+1] = 'Angle: '..round2(ship.angle,4)
-			-- s[#s+1] = 'is above? '..tostring(ship.isAbove)
 		end
 	end
+	-- for debugging only:
 	-- if tonumber(cD.MaxKinematics.UpGroundSpace) ~= nil then
 	-- 	s[#s+1] = 'Up: '..round2(cD.MaxKinematics.UpGroundSpace/1000,2)..' kN'
 	-- end
 	-- if tonumber(cD.MaxKinematics.DownSpace) ~= nil then
 	-- 	s[#s+1] = 'Down: '..round2(cD.MaxKinematics.DownSpace/1000,2)..' kN'
 	-- end
+	-- s[#s+1] = 'wVert '..tostring(cD.wVert)
+	-- s[#s+1] = 'locVert '..tostring(cD.locVert)
 	-- if type(gC.dbgTxt) == "string" and gC.dbgTxt ~= "" then
-		-- s[#s+1] = gC.dbgTxt
+	-- 	s[#s+1] = gC.dbgTxt
 	-- end
 	self.rowCount = #s
 	return table.concat(s, '<br>')

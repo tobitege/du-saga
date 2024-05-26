@@ -79,8 +79,8 @@ end
 
 function printHello()
 	P'HUD/Autopilot by Sagacious, Mayumi and CodeInfused'
-	P('v4.1.5')
-	P'Customized by tobitege (2024-05-24)'
+	P('v4.1.6')
+	P'Customized by tobitege (2024-05-26)'
 end
 
 function initEngines()
@@ -91,7 +91,6 @@ function initEngines()
 	local defaultTags = 'thrust analog longitudinal'
 	local getMaxT = construct.getMaxThrustAlongAxis
 	local fwd = {vec3(construct.getForward()):unpack()}
-	--local up = {vec3(construct.getUp()):unpack()}
 	gC.maxPrimaryKP = getMaxT(primaryTags, fwd)
 	gC.maxSecondaryKP = getMaxT(secondaryTags, fwd)
 	gC.maxTertiaryKP = getMaxT(tertiaryTags, fwd)
