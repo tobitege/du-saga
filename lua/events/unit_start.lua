@@ -8,7 +8,11 @@ function init()
 
 	vector = vec3()
 	targetAngularVelocity = vec3()
-	atlas = require('atlas')
+	local s, latlas = pcall(require, "autoconf/custom/" .. customAtlas)
+	if not s then
+		latlas = require("atlas")
+	end
+	atlas = latlas
 	initialiseAtlas()
 	systemId = 0
 end
