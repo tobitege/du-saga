@@ -15,6 +15,6 @@ out/development/Saga.conf
 out/release/Saga.conf
 screen/
 
-util/Codex.lua
 build_tobitege.bat
 saga_dubuild.lua
+util/Codex.lua
