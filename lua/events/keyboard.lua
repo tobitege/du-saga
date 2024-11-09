@@ -263,6 +263,9 @@ function onLandingGearDown() -- Landing gear v
 	if ap.enabled then ap:toggleState(false) end
 	if ship.mmbThrottle then ship.toggleMmb() end
 	gC.altitudeHold = false
+	if gC.prevStdMode then
+		gC.maneuverMode = false
+	end
 	gC.prevStdMode = false
 
 	inputs.brake = 0

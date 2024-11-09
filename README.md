@@ -2,6 +2,8 @@
 
 ## Latest update: 4.1.6.1 - 2025-08-28
 
+- Fix maneuver mode while landing
+Cherry-picked from: https://github.com/The-Third-Verse/SagaHUD/commit/df360e6bf81a29ab2a44ada62b2a68c9c28510ed
 - Add the possibility to load a custom atlas. Thanks to @leniver !
 Cherry-picked from: https://github.com/The-Third-Verse/SagaHUD/commit/37a4d3518d247b2e7162ee18f57be38a2b8569a6
 
