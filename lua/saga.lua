@@ -89,6 +89,7 @@ maxLandingSpeedHigh = 200 --export Maneuver mode: Max landing speed above 1 km a
 maxLandingSpeedLow = 100 --export Maneuver mode: Max landing speed below 1 km altitude. Default: 100
 travelAlt = 900 --export Maneuver mode: default travel altitude for AP targets. Default: 900
 DEBUG = false -- only for development!
+customAtlas = "atlas" --export: (Default "atlas") Custom atlas file to override NQ atlas (file need to be located in autoconf/custom/)
 
 globals = {
 	advAtmoEngines = false,
