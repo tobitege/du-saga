@@ -3,37 +3,44 @@
     "fmtVersion": 5
   },
   "name": "Saga",
-  "description": "Saga",
+  "description": "Saga HUD flight script with autopilote by Sagacious",
+  "version": "4.1.7",
   "sourcePath": "lua",
   "outputPath": "out",
   "libs": [],
-  "builds": {
-    "horizon2": {
-        "name": "Saga",
-        "type": "control",
-        "slots": { }
+  "builds": [
+    {
+      "name": "Saga",
+      "type": "control",
+      "slots": [
+        {
+          "name": "core",
+          "type": "core",
+          "events": []
+        }
+      ]
     }
-  },
-  "targets": {
-    "development": {
+  ],
+  "targets": [
+    {
       "name": "development",
-      "minify": false,
       "handleErrors": false,
+      "minify": false,
       "stripComments": true,
       "variables": {
         "debug": false
       }
     },
-    "release": {
+    {
       "name": "release",
-      "minify": true,
       "handleErrors": false,
+      "minify": true,
       "stripComments": true,
       "variables": {
         "debug": false
       }
     }
-  },
+  ],
   "internalPaths": [
     "autoconf/",
     "cpml/",
