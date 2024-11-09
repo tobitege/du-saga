@@ -1,6 +1,6 @@
 # Saga 4.1-beta
 
-## Latest update: 4.1.6 - 2024-05-26
+## Latest update: 4.1.7 - 2024-11-09
 
 ## Introduction
 
@@ -23,6 +23,10 @@ Join the [DU Open Source Initiative](https://discord.gg/jJdutszhB5) Discord serv
 Find the SETUP section at the end of this documentation!
 
 ## Changes
+
+- Improve fuel tank detection, allowing creation of new fuel tank
+- Add the possibility to load a custom atlas
+- Fix maneuver mode while landing 
 
 - Added new "**Maneuver**" mode (toggle: *ALT+9*) especially aimed at VTOL-capable constructs ("platformers"), like "AWP", "vSpeeder", "Bug" etc.  
 It generally works for any ship, depending on pilot's talents and installed ground engines,
