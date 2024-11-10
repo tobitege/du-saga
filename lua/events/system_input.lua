@@ -276,11 +276,11 @@ function onInput(text)
 	end
 
 	if action == '/orbitalt' then
-		if gC.oribtalHold then
+		if gC.orbitalHold then
 			if num2 == nil then
 				return Err'No valid number provided'
 			end
-			gC.manualOrbitAlt = round(num2,0)
+			gC.manualOrbitAlt = round2(num2,0)
 			P('Orbit Alt set to '..gC.manualOrbitAlt)
 			setTargetOrbitAlt()
 		else
