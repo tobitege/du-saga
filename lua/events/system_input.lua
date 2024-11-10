@@ -305,7 +305,7 @@ function onInput(text)
 		if num2 == nil then
 			return Err'Enter valid altitude number >= 1000!'
 		end
-		num2 = math.max(1000,round(num2,0))
+		num2 = math.max(1000,round2(num2,0))
 		links.antigrav.setTargetAltitude(num2)
 		P('AGG target altitude: '..num2)
 	end
