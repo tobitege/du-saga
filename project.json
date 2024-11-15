@@ -4,7 +4,7 @@
   },
   "name": "Saga",
   "description": "Saga HUD flight script with autopilote by Sagacious",
-  "version": "4.1.7",
+  "version": "4.1.8",
   "sourcePath": "lua",
   "outputPath": "out",
   "libs": [],
