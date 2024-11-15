@@ -59,6 +59,40 @@ tankData = {
 	["m"] = 1600,
 	["l"] = 12800,
 }
+local fuelmodifiers = {
+    ["2078334942"] = 0.9,
+    ["2216300178"] = 0.9,
+    ["2199218873"] = 0.9,
+    ["2268129307"] = 0.9,
+    ["4106743733"] = 0.9,
+    ["637265250"] = 0.9,
+    ["3580444026"] = 0.9,
+    ["319251893"] = 0.9,
+    ["3464984253"] = 0.81,
+    ["1104915586"] = 0.81,
+    ["121825379"] = 0.81,
+    ["185422505"] = 0.81,
+    ["4188179628"] = 0.81,
+    ["55848614"] = 0.81,
+    ["4169669296"] = 0.81,
+    ["2010490156"] = 0.81,
+    ["3464984250"] = 0.729,
+    ["1104915587"] = 0.729,
+    ["121825378"] = 0.729,
+    ["185422504"] = 0.729,
+    ["4188179631"] = 0.729,
+    ["55848615"] = 0.729,
+    ["4169669297"] = 0.729,
+    ["2010490159"] = 0.729,
+    ["3464984251"] = 0.6561,
+    ["1104915584"] = 0.6561,
+    ["121825381"] = 0.6561,
+    ["185422511"] = 0.6561,
+    ["4188179630"] = 0.6561,
+    ["55848612"] = 0.6561,
+    ["4169669302"] = 0.6561,
+    ["2010490158"] = 0.6561,
+}
 
 function initializeTanks()
 	local tankData = tankData
@@ -74,6 +108,9 @@ function initializeTanks()
 	local isInClass = system.isItemInClass
 	local function GetMaxVolume(itemId, size)
 		return tankData[itemId .. ""] or tankData[size .. ""] or 0
+	end
+	local function GetFuelTankModifier(itemId)
+		return fuelmodifiers[itemId .. ""] or 1
 	end
 	local replacements = {
 		{ "Optimized",   "Opt." },
@@ -106,16 +143,15 @@ function initializeTanks()
 			}
 			if isInClass(item.id, "AtmoFuelContainer") then
 				elem.tankType = "atmo"
-				elem.maxMass = GetMaxVolume(item.id, item.size) * (1 + (0.2 * atmoTankHandling)) * fuelWeights['atmo']
+				elem.maxMass = GetMaxVolume(item.id, item.size) * (1 + (0.2 * atmoTankHandling)) * fuelWeights['atmo'] * GetFuelTankModifier(item.id)
 				table.insert(fuels['atmo'], elem)
 			elseif isInClass(item.id, "RocketFuelContainer") then
 				elem.tankType = "rocket"
-				elem.maxMass = GetMaxVolume(item.id, item.size) * (1 + (0.1 * rocketTankHandling)) *
-				fuelWeights['rocket']
+				elem.maxMass = GetMaxVolume(item.id, item.size) * (1 + (0.1 * rocketTankHandling)) * fuelWeights['rocket'] * GetFuelTankModifier(item.id)
 				table.insert(fuels['rocket'], elem)
 			elseif isInClass(item.id, "SpaceFuelContainer") then
 				elem.tankType = "space"
-				elem.maxMass = GetMaxVolume(item.id, item.size) * (1 + (0.2 * spaceTankHandling)) * fuelWeights['space']
+				elem.maxMass = GetMaxVolume(item.id, item.size) * (1 + (0.2 * spaceTankHandling)) * fuelWeights['space'] * GetFuelTankModifier(item.id)
 				table.insert(fuels['space'], elem)
 			end
 			local ri = 1
@@ -132,7 +168,6 @@ function updateTanks()
 	for key, list in pairs(fuels) do
 		for _, tank in ipairs(list) do
 			tank.name = tank.name
-			tank.lastMass = tank.mass
 			tank.mass = links.core.getElementMassById(tank.uid) - tank.uMass
 			if tank.mass ~= tank.lastMass then
 				tank.percent = utils.round((tank.mass / tank.maxMass) * 100, 0.1)
@@ -140,6 +175,7 @@ function updateTanks()
 				tank.timeLeft = math.floor(tank.mass / ((tank.lastMass - tank.mass) / (curTime - tank.lastTime)))
 				tank.lastTime = curTime
 			end
+			tank.lastMass = tank.mass
 			ii = ii + 1
 			if ii > 5 then
 				coroutine.yield()
