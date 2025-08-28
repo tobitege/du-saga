@@ -1,6 +1,9 @@
 # Saga 4.1-beta
 
-## Latest update: 4.1.6 - 2024-05-26
+## Latest update: 4.1.6.1 - 2025-08-28
+
+- Add the possibility to load a custom atlas. Thanks to @leniver !
+Cherry-picked from: https://github.com/The-Third-Verse/SagaHUD/commit/37a4d3518d247b2e7162ee18f57be38a2b8569a6
 
 ## Introduction
 
@@ -18,7 +21,8 @@ The "development" folder contains the full-size (uncompressed) code and is not u
 Only the Saga.json file in the "**out\release**" sub-folder works!  
 This version should also work on GFN as it does not require any 3rd party files.  
 
-Join the [DU Open Source Initiative](https://discord.gg/jJdutszhB5) Discord server for support and feedback, where a channel for "saga-autopilot" exists, where I may be able to assist.  
+Join the [DU Open Source Initiative](https://discord.gg/jJdutszhB5) Discord server for support and feedback,
+where a channel for "saga-autopilot" exists, where I may be able to assist.  
 
 Find the SETUP section at the end of this documentation!
 
