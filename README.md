@@ -2,16 +2,16 @@
 
 ## Latest update: 4.1.6.1 - 2025-08-28
 
-The below changes were done by @leniver and cherry picked from The-Third-Verse fork:
+The below changes were done by [leniver](https://github.com/leniver) and cherry picked from [The-Third-Verse](https://github.com/The-Third-Verse/SagaHUD) fork:
 
 - Fix command to set orbital altitude  
-Cherry-picked from: https://github.com/The-Third-Verse/SagaHUD/commit/edfa715eb131849c80ad70ebf0540b388a91fe18
+Cherry-picked from: [edfa715eb131849c80ad70ebf0540b388a91fe18](https://github.com/The-Third-Verse/SagaHUD/commit/edfa715eb131849c80ad70ebf0540b388a91fe18)
 - Fix command to set anti-gravity height  
-Cherry-picked from: https://github.com/The-Third-Verse/SagaHUD/commit/d3510c6e159aca7f4dbd47aeb8e6418bad67aa6a
+Cherry-picked from: [d3510c6e159aca7f4dbd47aeb8e6418bad67aa6a](https://github.com/The-Third-Verse/SagaHUD/commit/d3510c6e159aca7f4dbd47aeb8e6418bad67aa6a)
 - Fix maneuver mode while landing  
-Cherry-picked from: https://github.com/The-Third-Verse/SagaHUD/commit/df360e6bf81a29ab2a44ada62b2a68c9c28510ed
+Cherry-picked from: [df360e6bf81a29ab2a44ada62b2a68c9c28510ed](https://github.com/The-Third-Verse/SagaHUD/commit/df360e6bf81a29ab2a44ada62b2a68c9c28510ed)
 - Add the possibility to load a custom atlas.  
-Cherry-picked from: https://github.com/The-Third-Verse/SagaHUD/commit/37a4d3518d247b2e7162ee18f57be38a2b8569a6
+Cherry-picked from: [37a4d3518d247b2e7162ee18f57be38a2b8569a6](https://github.com/The-Third-Verse/SagaHUD/commit/37a4d3518d247b2e7162ee18f57be38a2b8569a6)
 
 ## Introduction
 
