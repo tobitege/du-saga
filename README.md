@@ -2,6 +2,10 @@
 
 ## Latest update: 4.1.6.1 - 2025-08-28
 
+The below changes were done by @leniver and cherry picked from The-Third-Verse fork:
+
+- Fix command to set orbital altitude
+Cherry-picked from: https://github.com/The-Third-Verse/SagaHUD/commit/edfa715eb131849c80ad70ebf0540b388a91fe18
 - Fix command to set anti-gravity height
 Cherry-picked from: https://github.com/The-Third-Verse/SagaHUD/commit/d3510c6e159aca7f4dbd47aeb8e6418bad67aa6a
 - Fix maneuver mode while landing
