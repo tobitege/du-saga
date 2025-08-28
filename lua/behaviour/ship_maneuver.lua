@@ -467,11 +467,14 @@ function STEC()
 
 		-- * Forward
 		if not self.alternateCM then
-			if (self.mmbThrottle ) or inputs.pitch < 0 then
-				local t = ternary(self.mmbThrottle, 100, self.throttle)
-				tmp = tmp + (t * cD.wFwd * cD.MaxKinematics.Forward)
-			elseif inputs.pitch > 0 then
-				tmp = tmp - (self.throttle * cD.wFwd * cD.MaxKinematics.Backward)
+			local blockFwdBack = (self.gotoLock ~= nil) and (self.state == 'ALTITUDE' or self.state == 'ALIGNING' or self.state == 'LANDING')
+			if not blockFwdBack then
+				if (self.mmbThrottle ) or inputs.pitch < 0 then
+					local t = ternary(self.mmbThrottle, 100, self.throttle)
+					tmp = tmp + (t * cD.wFwd * cD.MaxKinematics.Forward)
+				elseif inputs.pitch > 0 then
+					tmp = tmp - (self.throttle * cD.wFwd * cD.MaxKinematics.Backward)
+				end
 			end
 		end
 
