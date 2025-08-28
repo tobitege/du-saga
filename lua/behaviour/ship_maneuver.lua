@@ -138,6 +138,10 @@ function STEC()
 			self.toggleMmb(false)
 			self.resetFlags()
 		end
+		-- Ensure vertical hovers/boosters are not held active after landing
+		navCom:resetCommand(axisCommandId.vertical)
+		navCom:deactivateGroundEngineAltitudeStabilization()
+		navCom:setTargetGroundAltitude(-1)
 	end
 
 	function self.resetManeuver()
