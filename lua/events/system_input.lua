@@ -301,6 +301,12 @@ function onInput(text)
 		P('Frozen = ' ..tostring(player.isFrozen()))
 	end
 
+	if action == '/agg' then
+		if links.antigrav ~= nil then
+			links.antigrav.toggle()
+		end
+	end
+
 	if action == '/aggalt' and links.antigrav ~= nil then
 		if num2 == nil then
 			return Err'Enter valid altitude number >= 1000!'
