@@ -103,7 +103,7 @@ function onInput(text)
 	if action == '/core' and _hud then _hud.toggleCoreWidget() end
 	if action == '/dock' and _hud then _hud.toggleDockWidget() end
 	if action == '/dockingmode' then
-		local num = setConfigValue(action, num2, false, 1, 1, 3, cfMap.dockMode, nil, "Docking mode %d")
+		local num = setConfigValue(action, num2, false, 1, 1, 3, cfMap.dockMode, "dockMode", "Docking mode %d")
 		if num ~= nil then
 			construct.setDockingMode(num)
 		end
@@ -286,6 +286,20 @@ function onInput(text)
 		else
 			Err"Engage 'Orbital hold' mode first!"
 		end
+	end
+
+	if action == '/aggauto' then
+		local arg = inputParts[2]
+		if arg == nil then
+			return P('Auto AGG Adjust = ' .. tostring(AutoPilot.userConfig.autoAGGAdjust))
+		end
+		local newVal = nil
+		if arg:lower() == 'on' then newVal = true end
+		if arg:lower() == 'off' then newVal = false end
+		if newVal == nil then return Err("Use '/aggauto on' or '/aggauto off'") end
+		Config:setValue(cfMap.autoAGGAdjust, newVal)
+		AutoPilot.userConfig.autoAGGAdjust = newVal
+		return P('Auto AGG Adjust ' .. (newVal and 'enabled' or 'disabled'))
 	end
 
 	if Radar ~= nil then
