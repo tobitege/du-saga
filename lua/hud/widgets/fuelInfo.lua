@@ -16,7 +16,12 @@ function Widgets.fuelInfo:build()
 			elseif tank.percent <= 50 then
 				pColor = 'goldenrod'
 			end
-			strings[#strings+1] = tank.name..' - <span style="color: '..pColor..'">'..tank.percent..'%</span>'
+			local tl = tank.timeLeft
+			local tlStr = ''
+			if tl and tl ~= 0 and tl ~= math.huge then
+				tlStr = ' ('..formatTimeString(tl)..')'
+			end
+			strings[#strings+1] = tank.name..' - <span style="color: '..pColor..'">'..tank.percent..'%</span>'..tlStr
         end
     end
     self.rowCount = #strings

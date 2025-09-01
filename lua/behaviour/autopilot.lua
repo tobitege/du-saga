@@ -76,7 +76,9 @@ function()
 		this.userConfig.landSpeedHigh = Config:getValue(configDatabankMap.landSpeedHigh)
 		this.userConfig.landSpeedLow = Config:getValue(configDatabankMap.landSpeedLow)
 		this.userConfig.travelAlt = Config:getValue(configDatabankMap.travelAlt)
-		this:setHoverHeight(this.userConfig.hoverHeight)
+		if not (cData and cData.isLanded) then
+			this:setHoverHeight(this.userConfig.hoverHeight)
+		end
 		this:updateMaxSpaceSpeed()
 	end
 

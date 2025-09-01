@@ -21,6 +21,8 @@ maxRoll = 45 --export: (Max Roll) set between 5-80, 45 is default.
 wingStallAngle = 35 --export: (Wing Stall Angle) 25-60.
 -- let the ship handle shield control on off/resistance management/venting.
 shieldManage = true --export: (Auto Shield Management) true/false
+-- automatically adjust AGG target altitude during AP operations on surface targets
+autoAGGAdjust = false --export: (Auto AGG Adjust) true/false
 -- (max speed you want to go in space, not ships capable max speed) 0 for ships
 -- max capable speed, or if your selected speed exceeds ships capability, ships
 -- max speed will be used.
