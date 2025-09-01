@@ -1,6 +1,17 @@
 # Saga 4.1-beta
 
-## Latest update: 4.1.6.1 - 2025-08-28
+## Latest update: 4.1.6.2 - 2025-09-01
+
+Latest fixes:
+
+- Introduced `autoAGGAdjust` configuration option.
+- Added `/aggauto` chat command to toggle auto AGG adjustment (on/off).
+- Updated autopilot logic to prevent hover height adjustment when landed.
+- Enhanced fuel info display with time left for tanks.
+- Fix `maxSpaceSpeed` display update after `/setMSP` chat command.
+- Ensure vertical hovers/boosters are deactivated after landing in ship maneuver logic
+- Added `/agg` chat toggle command.
+- Block manual forward/back thrust while the mini‑pilot is in ALTITUDE, ALIGNING or LANDING phases with an active `gotoLock`.
 
 The below changes were done by [leniver](https://github.com/leniver) and cherry picked from [The-Third-Verse](https://github.com/The-Third-Verse/SagaHUD) fork:
 

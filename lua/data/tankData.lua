@@ -54,11 +54,8 @@ function initializeTanks()
 	local tankData = tankData
 	local fuelWeightMod = (((100-(5*fuelTankOptimization))/100))-1
 	local contWeightMod = (((100-(5*containerOptimization))/100))-1
-	fuelWeights = {
-		['atmo'] = (4 - (4 * (math.abs(fuelWeightMod) + math.abs(contWeightMod)))),
-		['space'] = (6 - (6 * (math.abs(fuelWeightMod) + math.abs(contWeightMod)))),
-		['rocket'] = (0.8 - (0.8 * (math.abs(fuelWeightMod) + math.abs(contWeightMod))))
-	}
+	local fw = 1 - (math.abs(fuelWeightMod) + math.abs(contWeightMod))
+	fuelWeights = { ['atmo'] = 4*fw, ['space'] = 6*fw, ['rocket'] = 0.8*fw }
 
 	local curTime = system.getArkTime()
 
@@ -68,6 +65,7 @@ function initializeTanks()
 		['rocket'] = {}
 	}
 
+	local handling = { atmo = atmoTankHandling, space = spaceTankHandling, rocket = rocketTankHandling }
 	elemIDs = links.core.getElementIdList()
 	for i=1,#elemIDs,1 do
 		elem = {
@@ -90,21 +88,9 @@ function initializeTanks()
 				elem.percent = 0
 				elem.lastMass = 1
 				elem.timeLeft = 0
-				elem.lastTimeLeft = 0
-				if elem.tankType == 'atmo' then
-					elem.lastTime = curTime;
-					elem.maxMass = tankData.sizes['atmo'][elem.size][2] * (1 + (0.2 * atmoTankHandling)) * fuelWeights['atmo']
-					table.insert(fuels['atmo'], elem)
-				elseif(elem.tankType == 'space') then
-					elem.lastTime = curTime
-					elem.maxMass = tankData.sizes['space'][elem.size][2] * (1 + (0.2 * spaceTankHandling)) * fuelWeights['space']
-					table.insert(fuels['space'], elem)
-					--P( elem.size:upper()..": max mass: "..elem.maxMass )
-				elseif(elem.tankType == 'rocket') then
-					elem.lastTime = curTime;
-					elem.maxMass = tankData.sizes['rocket'][elem.size][2] * (1 + (0.2 * rocketTankHandling)) * fuelWeights['rocket']
-					table.insert(fuels['rocket'], elem)
-				end
+				elem.lastTime = curTime
+				elem.maxMass = tankData.sizes[elem.tankType][elem.size][2] * (1 + (0.2 * handling[elem.tankType])) * fuelWeights[elem.tankType]
+				table.insert(fuels[elem.tankType], elem)
 			else
 				P("Unknown tank size for ["..(elem.kind).."] ["..(elem.maxHp).."]")
 			end
@@ -116,12 +102,10 @@ function updateTanks()
 	local tankData, curTime, ii = tankData, system.getArkTime(), 0
 	for key, list in pairs(fuels) do
 		for _, tank in ipairs(list) do
-			tank.name = tank.name
 		   	tank.lastMass = tank.mass
 		   	tank.mass = links.core.getElementMassById(tank.uid) - tankData.sizes[key][tank.size][1]
 		   	if tank.mass ~= tank.lastMass then
 			  	tank.percent = utils.round((tank.mass / tank.maxMass)*100,0.1)
-			   	tank.lastTimeLeft = tank.timeLeft
 			 	tank.timeLeft = math.floor(tank.mass / ((tank.lastMass - tank.mass) / (curTime - tank.lastTime)))
 			   	tank.lastTime = curTime
 		   	end

@@ -83,8 +83,8 @@ end
 
 function printHello()
 	P'HUD/Autopilot by Sagacious, Mayumi and CodeInfused'
-	P('v4.1.6.1')
-	P'Customized by tobitege (2025-08-28)'
+	P('v4.1.6.2')
+	P'Customized by tobitege (2025-09-01)'
 end
 
 function initEngines()
