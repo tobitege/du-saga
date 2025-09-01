@@ -233,7 +233,7 @@ function onInput(text)
 	end
 
 	if action == '/setmaxspacespeed' or action == '/setmsp' then
-		setConfigValue(action, num2, false, 20000, 100, 50000, cfMap.maxSpaceSpeed, nil, 'Max Space Speed set to %d')
+		setConfigValue(action, num2, false, 20000, 100, 50000, cfMap.maxSpaceSpeed, "maxSpaceSpeed", 'Max Space Speed set to %d')
 	end
 
 	if action == '/setmaxpitch' or action == '/setmp' then
