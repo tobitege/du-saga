@@ -274,62 +274,65 @@ end
 function onLandingGearDown() -- Landing gear v
 	local gC, ap = globals, AutoPilot
 
-	-- Reset some states
+	-- NEW APPROACH: Always use Maneuver mode for landing/takeoff operations
+	-- Store original mode to restore later
+	local wasStandardMode = not gC.maneuverMode
+
+	-- Switch to Maneuver mode for clean landing/takeoff operations
+	if wasStandardMode then
+		gC.maneuverMode = true
+		gC.pendingModeRestore = true -- Flag for restoration
+		gC.originalMode = false -- Remember we were in Standard mode
+	end
+
+	-- Reset some states (keep essential parts from original)
 	if ap.enabled then ap:toggleState(false) end
 	if ship.mmbThrottle then ship.toggleMmb() end
 	gC.altitudeHold = false
-	if gC.prevStdMode then
-		gC.maneuverMode = false
-	end
-	gC.prevStdMode = false
 
 	inputs.brake = 0
 	inputs.brakeLock = false
-	-- When already landed, do a liftoff to hover height in active mode
+
+	-- Use Maneuver mode's clean landing/takeoff logic
 	if cData.isLanded then
+		-- Takeoff using Maneuver mode
 		ship.landingMode = false
-		-- Liftoff in either mode
-		if not gC.maneuverMode then
-			return ap:toggleLandingMode(false)
-		end
 		moveVert(ap.userConfig.hoverHeight)
 		ship.takeoff = true
 		ship.travel = false
 		ship.vertical = false
+		unit.retractLandingGears() -- Simple: just retract gears during takeoff
+		-- Set timer for mode restoration after takeoff
+		if wasStandardMode then
+			gC.modeRestoreTimer = 60 -- Restore after ~3 seconds at 20fps
+		end
 		return
 	end
 
-	-- Not landed and landing mode is active, toggle it off
+	-- Landing using Maneuver mode
 	if (ap.landingMode or ship.landingMode) then
+		-- Cancel landing mode
 		ap.landingMode = false
 		ship.landingMode = false
-		if gC.maneuverMode then
-			--return ternary(gC.maneuverMode, ship.resetManeuver(), ship.resetMoving())
-			ship.resetMoving()
-			if gC.prevStdMode then
-				gC.maneuverMode = false
-			end
-		end
-		if not gC.maneuverMode then
-			setThrottle()
-			navCom:activateGroundEngineAltitudeStabilization()
-			if not gC.startup then
-				ap:toggleLandingMode(false)
-			end
+		ship.resetMoving()
+		-- Immediate mode restoration for aborting landing
+		if wasStandardMode then
+			gC.maneuverMode = false
+			gC.pendingModeRestore = false
 		end
 		return
 	end
 
-	-- Finally, turn on landing mode and remember coming from Standard mode
-	if not gC.maneuverMode then
-		ship.resetManeuver()
-		gC.prevStdMode = true
-	end
+	-- Initiate landing using Maneuver mode
 	ship.landingMode = true
 	ap.landingMode = false
-	-- ap:toggleLandingMode(true)
 	ship.prepLanding()
 	setThrottle(1,1,1)
+	-- Set flag for mode restoration AFTER actual landing completion
+	if wasStandardMode then
+		gC.waitingForLanding = true -- Wait for actual landing completion
+		gC.modeRestoreTimer = nil -- No timer - wait for landing
+	end
 end
 
 function onUpArrowDown() -- Up Arrow v

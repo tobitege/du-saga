@@ -39,6 +39,13 @@ function onUnitStart()
 	Config:init(links.databanks, 'SagaConf', 'SagaActiveConf')
 	RouteDatabase:init(links.databanks, 'SagaRoutes', 'SagaActiveRoutes')
 	Radar:init(links.radars)
+
+	local cD, gC = cData, globals
+	-- Store the actual desired mode
+	gC.desiredMode = Config:getValue(configDatabankMap.maneuverMode, false)
+	-- ALWAYS start in Maneuver mode for safe initialization
+	gC.maneuverMode = true
+
 	AutoPilot:init()
 
 	initializeTanks()
@@ -61,11 +68,9 @@ function onUnitStart()
 	navCom.axisCommands[axisCommandId.longitudinal].throttleMouseStepScale = 1
 	navCom:setupCustomTargetSpeedRanges(axisCommandId.longitudinal, Nav.targetSpeedRanges)
 
-	local cD, gC = cData, globals
 	if not cD.vtolCapable then
 		P"[W] Low lift for Maneuver mode."
 	end
-	gC.maneuverMode = Config:getValue(configDatabankMap.maneuverMode)
 	if gC.maneuverMode then
 		setThrottle(1,1,1)
 		ship.apply(cD)
@@ -79,6 +84,13 @@ function onUnitStart()
 		inputs.brakeLock = true
 	end
 	gC.startup = false
+
+	-- Set up delayed mode switch if we need to go to Standard mode
+	if not gC.desiredMode then
+		-- Schedule switch to Standard mode after 3 frames
+		gC.frameCounter = 0
+		gC.pendingModeSwitch = true
+	end
 end
 
 function printHello()

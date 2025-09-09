@@ -10,7 +10,7 @@ function()
 		dockMode = dockMode,
 		dockWidget = dockWidget,
 		hoverHeight = hoverHeight,
-		landingMode = false,
+		landingMode = true,
 		maxPitch = maxPitch,
 		maxRoll = maxRoll,
 		maxSpaceSpeed = maxSpaceSpeed,
@@ -46,6 +46,7 @@ function()
 		Config.defaults[configDatabankMap.landSpeedHigh] = this.userConfig.landSpeedHigh
 		Config.defaults[configDatabankMap.landSpeedLow] = this.userConfig.landSpeedLow
 		Config.defaults[configDatabankMap.travelAlt] = this.userConfig.travelAlt
+		Config.defaults[configDatabankMap.maneuverMode] = false -- Default to Standard mode
 
 		EventSystem:register('ConfigDBChanged', this.applyConfig, this)
 		this:applyConfig()
@@ -54,7 +55,12 @@ function()
 
 		this:resumeFromDatabank()
 		if not globals.maneuverMode then
-			this:toggleLandingMode(this.userConfig.landingMode)
+			-- Always start in landing mode when ship is actually landed, regardless of saved config
+			if cData and cData.isLanded then
+				this:toggleLandingMode(true)  -- Force landing mode ON
+			else
+				this:toggleLandingMode(this.userConfig.landingMode)  -- Use saved preference
+			end
 		end
 	end
 
@@ -214,7 +220,8 @@ function()
 		end
 		this.userConfig.hoverHeight = round2(clamp(this.userConfig.hoverHeight or 20,0,50),1)
 		if not (this.landingMode or ship.landingMode) then
-			navCom:setTargetGroundAltitude(this.userConfig.hoverHeight+this.userConfig.agl)
+			-- Use hover height directly like Maneuver mode (no AGL offset)
+			navCom:setTargetGroundAltitude(this.userConfig.hoverHeight)
 		end
 		Config:setValue(configDatabankMap.hoverHeight, this.userConfig.hoverHeight)
 	end
