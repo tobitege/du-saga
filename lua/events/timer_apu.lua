@@ -399,11 +399,12 @@ function onTimerAPU()
 			gCache.horizontalStopped = false
 		end
 		if not gCache.brakeTrigger then
-			if sameBody and cData.inAtmo and not behindPlanet and not gCache.aggAP and ap.targetLoc == 'surface' or not gCache.spaceCapable then
+			local longSurfaceTrip = sameBody and ap.targetLoc == 'surface' and projDist >= 100000
+			if (sameBody and cData.inAtmo and not behindPlanet and not gCache.aggAP and ap.targetLoc == 'surface' and not longSurfaceTrip) or not gCache.spaceCapable then
 				gCache.apMode = 'Atmo Travel'
 			elseif (not sameBody or ap.targetLoc == 'space') and cData.inAtmo and gCache.smoothClimb then
 				gCache.apMode = 'Transition'
-			elseif (((not sameBody or ap.targetLoc == 'space') and not behindPlanet and not gCache.spaceBrakeTrigger) or (sameBody and curAltitude > gCache.targetOrbitAlt+1000 and not gCache.spaceBrakeTrigger) and not aggData.aggBubble) or gCache.apMode == 'standby' then
+			elseif (((not sameBody or ap.targetLoc == 'space') and not behindPlanet and not gCache.spaceBrakeTrigger) or (sameBody and curAltitude > gCache.targetOrbitAlt+1000 and not gCache.spaceBrakeTrigger) or (longSurfaceTrip and not gCache.spaceBrakeTrigger)) and not aggData.aggBubble or gCache.apMode == 'standby' then
 				gCache.apMode = 'Transfer'
 				gCache.orbitLock = false
 			elseif gCache.aggAP and aggData.aggBubble then
@@ -766,24 +767,6 @@ function onTimerAPU()
 			navCom:deactivateGroundEngineAltitudeStabilization()
 		end
 	end
-
-	---@TODO does this need a check for e.g. "not waterState"?
--- 	if ap.landingMode then
--- P('ap.landingMode '..tostring(curAltitude))
--- 		navCom:setTargetSpeedCommand(axisLong, 0)
--- 		navCom:setThrottleCommand(axisLong, 0)
--- 		if cData.zSpeedKPH < -15 then
--- 			navCom:setTargetGroundAltitude(curAltitude)
--- 			navCom:activateGroundEngineAltitudeStabilization()
--- 			navCom:resetCommand(axisVert)
--- 			navCom:updateCommandFromActionStart(axisVert, 1.0)
--- 		else
--- 			navCom:resetCommand(axisVert)
--- 			navCom:deactivateGroundEngineAltitudeStabilization()
--- 			navCom:setTargetGroundAltitude(0)
--- 		end
--- 		inputs.brake = 1
--- 	end
 
 	if inputs.brakeLock then
 		inputs.brake = 1

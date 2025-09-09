@@ -173,7 +173,7 @@ function onInput(text)
 		end
 	end
 
-	if action == '/goto' then
+	if action == '/goto' or action == '/gotom' then
 		if #inputParts < 2 or #inputParts > 3 then
 			return Err(ERR_INV_POS)
 		end
@@ -197,11 +197,12 @@ function onInput(text)
 			end
 		end
 		ap.targetAltitude = round2(tA,0)
-		if gC.maneuverMode then
+		if action == '/gotom' then
+			if not gC.maneuverMode then return P('[I] Enable Maneuver mode (Alt-9) first') end
 			gotoTarget(target, true, cD.inAtmo and ap.userConfig.travelAlt or cD.altitude)
 			ship.travel = true
-		elseif not ap.enabled then
-			onAlt1()
+		else
+			if gC.maneuverMode then onAlt9() end
 		end
 		return P('Target set to '..inputParts[2]..' near '..ap.targetBody.name..
 			' '..ap.targetLoc..' at '..ap.targetAltitude..' m ')

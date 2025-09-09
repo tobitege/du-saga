@@ -1,6 +1,6 @@
 # Saga 4.1-beta
 
-## Latest update: 4.1.7 - 2024-11-09
+## Latest update: 4.1.8 - 2025-09-09
 
 ## Introduction
 
@@ -26,7 +26,7 @@ Find the SETUP section at the end of this documentation!
 
 - Improve fuel tank detection, allowing creation of new fuel tank
 - Add the possibility to load a custom atlas
-- Fix maneuver mode while landing 
+- Fix maneuver mode while landing
 
 - Added new "**Maneuver**" mode (toggle: *ALT+9*) especially aimed at VTOL-capable constructs ("platformers"), like "AWP", "vSpeeder", "Bug" etc.  
 It generally works for any ship, depending on pilot's talents and installed ground engines,
@@ -143,7 +143,7 @@ Caveat: for ground-only constructs, like hovercrafts, this mode might not work
 as expected as at some speed the ship might gain altitude! Also keep in mind,
 that this mode does NOT follow terrain!
 
-- **/up** *xxx* and **/down** *xxx* 
+- **/up** *xxx* and **/down** *xxx*
 
   *xxx* is the required distance in meters (positive = up, negative = down).
 This will move the ship (if VTOL capable) in the given vertical direction
@@ -154,7 +154,11 @@ There needs to be some planetary body of influence for altitude reference and al
 
 - **/goto ::pos{...}**
 
-  This LUA chat command now also works in Maneuver mode.
+  Standard flight mode route to a ::pos. This ONLY sets the target location.
+
+- **/gotom ::pos{...}**
+
+  Maneuver mode traversal to a ::pos using the Maneuver Mini‑Autopilot (Altitude → Align → Traverse → Land). Requires Maneuver mode to be enabled.
   - Step 1: Altitude adjustment  
   First the construct will move vertically to a calculated altitude, either a set travel
   altitude (/travelAlt) or one that is at least 50m above the target. The travel altitude here
@@ -171,7 +175,7 @@ There needs to be some planetary body of influence for altitude reference and al
   above the target.
   - Step 4: Automatic landing  
   The final part of the trip is then the dynamic landing, taking into account the configured
-  speed limits for low and high altitude. 
+  speed limits for low and high altitude.
   
   During the whole process, a "Travel" hint will be shown on the hud at top-center location.  
   To abort the flight at any time, just tap the CTRL key, as usual. If the ship is VTOL capable,
@@ -185,6 +189,14 @@ This marker can be set by /setBase (e.g. landed at home base), Alt+Shift+6 to ac
 a stored base location or by activating an AP route in the menu.  
 This command will do a traversal at least 50m above the destination and not use the
 travel altitude as the /goto command does.
+
+- **ALT 1**
+
+  Toggles the Standard Autopilot. Can only be turned on in Standard flight mode. When Maneuver mode is active, this hotkey will not engage the autopilot.
+
+- **ALT+SHIFT+9**
+
+  Starts the Maneuver Mini-Autopilot sequence (ALTITUDE → TRAVERSING) to the current AP target or selected route/base marker. Requires Maneuver mode to be enabled.
 
 - **ALT 8**
 
@@ -225,7 +237,8 @@ below 1km on Alioth, thus not all ships are good AGG companion ships!
 | /clearBase | Clears the stored base location. |
 | /goAlt *xxx* | Move vertically to the specified absolute altitude. |
 | /go | Traverses to current target marker (see Maneuver mode section). Optional 2nd parameter can be a travel altitude. |
-| /goto *::pos{}* | Maneuver mode only: like /go command, but traverses to a specified ::pos. |
+| /goto *::pos{}* | Sets the target pos for standard AP to fly to |
+| /gotom *::pos{}* | Maneuver mode only: traverse to ::pos using mini‑autopilot. |
 | /landSpeedHigh *xxx* | Sets the maximum landing speed when above 1 km altitude (in km/h).<br>Default: 200. *PERM* |
 | /landSpeedLow *xxx* | Sets the maximum landing speed when below 1 km altitude (in km/h) but above ground detection.<br> Default: 100. *PERM* |
 | /vertical *xxx* | Moves the construct vertically *xxx* meters relative to the current altitude, i.e. up = positive or down = negative distance possible. Numeric value from -200000 to 200000 allowed.<br> Examples:<br> /vertical 1000<br> /vertical -123 |
@@ -325,7 +338,7 @@ Some may be stored also in a linked databank, others must be re-set whenever the
 - a telemeter is highly recommended (up to 100m ground detection)
 - a dynamic construct - NOT an elevator!
 
-#### Setup
+#### In-Game Setup
 
 - Deploy the piloting element
 - Link the following elements to the chair/remote:

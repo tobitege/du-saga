@@ -187,7 +187,7 @@ function getConstructData(construct, core)
 
 	-- Acceleration per all 3 axis in a vec3()
 	_cD.axisAccel = getAccAllAxes(_cD)
-	_cD.isLanded = tonumber(_cD.GrndDist) ~= nil and _cD.GrndDist < 0.5 and _cD.speedKph < 1
+	_cD.isLanded = tonumber(_cD.GrndDist) ~= nil and _cD.GrndDist < 1 and _cD.speedKph < 1
 	-- atmoD is a boost factor for low atmo densities,
 	-- e.g. for Thades where it is only 35% or less
 	_cD.atmoD = ternary(_cD.atmoDensity > 0.1, _cD.atmoDensity, 1)

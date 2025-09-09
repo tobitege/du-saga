@@ -19,3 +19,6 @@ SagaHud.conf
 build_tobitege.bat
 saga_dubuild.lua
 util/Codex.lua
+default/
+org/
+util/Codex.lua

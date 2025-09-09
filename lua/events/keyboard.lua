@@ -48,24 +48,14 @@ function onAlt1()
 	if inputs.shift then return HUD.toggleMainMenu() end
 	local ap, s, cD = AutoPilot, ship, cData
 	if not globals.maneuverMode then
+		-- If enabling AP now, clear transient landing/takeoff helpers
+		if not ap.enabled then
+			s.landingMode = false
+			ap.landingMode = false
+		end
 		return ap:toggleState(not ap.enabled)
 	end
-	-- Maneuver mini-Autopilot :)
-	if not ap.target then return end
-	if s.gotoLock then
-		s.resetMoving()
-		resetAP()
-		ap.target = nil
-	elseif cD.isLanded then
-		P'[E] Liftoff first!'
-	else
-		inputs.brakeLock = false
-		s.switchState('ALTITUDE')
-		s.gotoLock = ap.target
-		s.targetVector = (s.gotoLock - cD.position):normalize()
-		s.travel = true
-		P("Moving to: " .. tostring(Vec3ToPosString(ap.target)))
-	end
+	return P('[I] Disable Maneuver mode (Alt-9) to use Autopilot')
 end
 
 function onAlt2()
@@ -199,6 +189,31 @@ end
 
 function onAlt9()
 	local gC, ap = globals, AutoPilot
+	if inputs.shift then
+		-- Maneuver mini-Autopilot :)
+		if not gC.maneuverMode then
+			return P('[I] Enable Maneuver mode (Alt-9) first')
+		end
+		if not ap.target then return end
+		-- Clear any Standard-mode transient flags before engaging mini-AP
+		ap.landingMode = false
+		ship.landingMode = false
+		if ship.gotoLock then
+			ship.resetMoving()
+			resetAP()
+			ap.target = nil
+		elseif cData.isLanded then
+			P'[E] Liftoff first!'
+		else
+			inputs.brakeLock = false
+			ship.switchState('ALTITUDE')
+			ship.gotoLock = ap.target
+			ship.targetVector = (ship.gotoLock - cData.position):normalize()
+			ship.travel = true
+			P("Moving to: " .. tostring(Vec3ToPosString(ap.target)))
+		end
+		return
+	end
 	if cData.warpOn or ap.enabled then
 		return P"[E] Can't toggle now"
 	end

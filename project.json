@@ -3,7 +3,7 @@
     "fmtVersion": 5
   },
   "name": "Saga",
-  "description": "Saga HUD flight script with autopilote by Sagacious",
+  "description": "Saga HUD flight script with autopilot by Sagacious",
   "version": "4.1.8",
   "sourcePath": "lua",
   "outputPath": "out",
