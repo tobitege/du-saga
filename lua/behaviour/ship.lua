@@ -415,7 +415,7 @@ function applyShipInputs()
 		end
 	end
 	if gC.inOrbit and gC.orbitalHold and not gC.brakeTrigger then
-		local brakeSensitivity = clamp(((orbitFocus().orbitAltTarget-gC.targetOrbitAlt)*0.0001)*4,0.01,5)
+		local brakeSensitivity = clamp(((cData.orbitFocus.orbitAltTarget-gC.targetOrbitAlt)*0.0001)*4,0.01,5)
 		brkAccel = vec3(clamp(brkAccel.x,-brakeSensitivity,brakeSensitivity), clamp(brkAccel.y,-brakeSensitivity,brakeSensitivity), clamp(brkAccel.z,-brakeSensitivity,brakeSensitivity))
 	end
 	if ap.enabled and (brakeCtrl == 12.1 or brakeCtrl == 13.1
