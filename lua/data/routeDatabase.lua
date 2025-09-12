@@ -90,7 +90,7 @@ function()
 		local dbStringValue = this.databank.getStringValue(this.dbDataKey)
 		if dbStringValue ~= '' then
 			local dbLoad, err = load('return ' .. dbStringValue)
-			if dbLoad == nil then
+			if dbLoad == nil or this.routes == nil then
 				P('[E] Error loading routes from databank!')
 				P(dbStringValue)
 				P(err)
@@ -98,7 +98,11 @@ function()
 				local routesOnDatabank = dbLoad()
 				if routesOnDatabank ~= nil then
 					this.routes = routesOnDatabank
-					table.sort(this.routes, function(a,b) return a.name < b.name end)
+					table.sort(this.routes, function(a,b)
+						local an = (a and a.name) or ''
+						local bn = (b and b.name) or ''
+						return tostring(an) < tostring(bn)
+					end)
 				end
 			end
 		end
@@ -118,6 +122,7 @@ function()
 
 	function this:routesChanged()
 		local foundEdit, foundActive = false, false
+		if this.routes == nil then return end
 
 		table.sort(this.routes, function(a,b) return a.name < b.name end)
 

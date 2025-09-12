@@ -99,7 +99,7 @@ function()
 		if type(target) == 'table' then
 			if target.x ~= nil then
 				this:setTarget(target)
-			elseif #target == 3 and target[3] and RouteDatabase:getDatabankName() == target[3] then
+			elseif #target == 3 and target[3] and RouteDatabase and RouteDatabase:getDatabankName() == target[3] then
 				this:setActiveRoute(target[1], target[2])
 			end
 		end
@@ -150,6 +150,7 @@ function()
 		if not routeIndex then return end
 		if tonumber(pointIndex) == nil then pointIndex = 1 end
 		local rdb = RouteDatabase
+		if not rdb or not rdb.getPointCoordinates then return end
 		local targetPos = rdb:getPointCoordinates(routeIndex, pointIndex)
 		if not targetPos then return end
 		this.currentRouteIndex = routeIndex
@@ -219,7 +220,7 @@ function()
 			this.userConfig.hoverHeight = tonumber(height)
 		end
 		this.userConfig.hoverHeight = round2(clamp(this.userConfig.hoverHeight or 20,0,50),1)
-		if not (this.landingMode or ship.landingMode) then
+		if not (globals.startup or this.landingMode or ship.landingMode) then
 			-- Use hover height directly like Maneuver mode (no AGL offset)
 			navCom:setTargetGroundAltitude(this.userConfig.hoverHeight)
 		end
@@ -270,8 +271,8 @@ function()
 			links.electronics:OpenDoors()
 		elseif not gC.maneuverMode then
 			navCom:resetCommand(axisCommandId.vertical)
-			navCom:setTargetGroundAltitude(AutoPilot.userConfig.hoverHeight)
-			navCom:activateGroundEngineAltitudeStabilization()
+			navCom:setTargetGroundAltitude(-1) -- Disable ground stabilization
+			navCom:deactivateGroundEngineAltitudeStabilization()
 			Nav:update()
 			unit.retractLandingGears()
 			links.electronics:CloseDoors()

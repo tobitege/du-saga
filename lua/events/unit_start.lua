@@ -91,12 +91,17 @@ function onUnitStart()
 		gC.frameCounter = 0
 		gC.pendingModeSwitch = true
 	end
+
+	-- Ensure forward axis is neutralized after initialization
+	navCom:setTargetSpeedCommand(axisCommandId.longitudinal, 0)
+	navCom:resetCommand(axisCommandId.longitudinal)
+	navCom:setThrottleCommand(axisCommandId.longitudinal, 0)
 end
 
 function printHello()
 	P'HUD/Autopilot by Sagacious, Mayumi and CodeInfused'
 	P('v4.1.8')
-	P'Customized by tobitege (2024-09-09)'
+	P'Customized by tobitege (2025-09-12)'
 end
 
 function initEngines()
